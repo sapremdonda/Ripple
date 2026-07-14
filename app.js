@@ -1149,7 +1149,7 @@ function initType() {
 
   function newPassage() {
     target = PASSAGES[Math.floor(Math.random() * PASSAGES.length)];
-    passageEl.innerHTML = [...target].map(c => `<span>${c === ' ' ? '&nbsp;' : escapeHtml(c)}</span>`).join('');
+    passageEl.innerHTML = [...target].map(c => `<span>${c === ' ' ? ' ' : escapeHtml(c)}</span>`).join('');
     reset();
   }
   function reset() {

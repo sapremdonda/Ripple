@@ -716,6 +716,7 @@ select.field { cursor: pointer; appearance: none; -webkit-appearance: none;
   padding: 18px; border-radius: var(--radius-sm); margin-bottom: 14px;
   background: var(--glass); border: 1px solid var(--glass-brd);
   color: var(--ink-faint); user-select: none;
+  white-space: normal; overflow-wrap: break-word;
 }
 .passage span { border-radius: 3px; transition: color .1s, background .1s; }
 .passage span.ok { color: var(--teal); }
