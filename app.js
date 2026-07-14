@@ -103,7 +103,7 @@ function buildFooter() {
   f.className = 'site-footer';
   f.innerHTML = `<div class="footer-inner">
     <span class="footer-mark">${logo('footLogo')}</span>
-    <span class="footer-text">Made by <b>Saprem</b> · with help from Claude</span>
+    <span class="footer-text">Made by <b>Saprem</b></span>
   </div>`;
   document.body.appendChild(f);
 }
