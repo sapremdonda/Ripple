@@ -64,7 +64,7 @@ const ICON = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>',
   moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>',
   menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
-  cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>',
+  cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V15z"/></svg>',
   plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'
 };
 
@@ -117,13 +117,21 @@ const TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
    HOME
    ============================================================ */
 const QUOTES = [
-  ['Small steps every day add up to big results.', 'keep going'],
-  ['The secret of getting ahead is getting started.', 'Mark Twain'],
-  ['You don’t have to be great to start, but you have to start to be great.', 'Zig Ziglar'],
-  ['Focus on being productive instead of busy.', 'Tim Ferriss'],
+  ['You can’t stop the waves, but you can learn to surf.', 'Jon Kabat-Zinn'],
+  ['How you spend your days is how you spend your life.', 'Annie Dillard'],
+  ['Start where you are. Use what you have. Do what you can.', 'Arthur Ashe'],
+  ['It always seems impossible until it’s done.', 'Nelson Mandela'],
   ['A river cuts through rock not by power, but by persistence.', 'proverb'],
+  ['The best time to plant a tree was twenty years ago. The second best time is now.', 'proverb'],
+  ['Almost everything works again if you unplug it for a few minutes — including you.', 'Anne Lamott'],
+  ['Do the hard jobs first. The easy ones will take care of themselves.', 'Dale Carnegie'],
+  ['Focus on being productive instead of busy.', 'Tim Ferriss'],
+  ['Water is the softest thing, yet it can wear away stone.', 'Lao Tzu'],
   ['Well begun is half done.', 'Aristotle'],
-  ['Discipline is choosing what you want most over what you want now.', 'reminder']
+  ['Discipline is choosing what you want most over what you want now.', 'reminder'],
+  ['Little by little, a little becomes a lot.', 'proverb'],
+  ['Calm mind brings inner strength and self-confidence.', 'Dalai Lama'],
+  ['Rest is not idleness — it’s part of the work.', 'reminder']
 ];
 
 function initHome() {
@@ -717,13 +725,13 @@ function tone(freq, dur, type = 'sine', gain = 0.04, when = 0, glideTo = null) {
 function sfx(name) {
   if (!getSettings().sound) return;
   switch (name) {
-    case 'tap':      tone(330, 0.05, 'sine', 0.02); break;
-    case 'toggle':   tone(520, 0.05, 'sine', 0.028); tone(760, 0.06, 'sine', 0.024, 0.04); break;
-    case 'add':      tone(440, 0.08, 'triangle', 0.03, 0, 680); break;
-    case 'delete':   tone(420, 0.09, 'sine', 0.028, 0, 210); break;
-    case 'complete': [523, 659, 784].forEach((f, i) => tone(f, 0.15, 'sine', 0.035, i * 0.06)); break;
-    case 'ding':     tone(1046, 0.45, 'sine', 0.045, 0, 900); break;
-    case 'error':    tone(180, 0.2, 'sawtooth', 0.025, 0, 130); break;
+    case 'tap':      tone(330, 0.06, 'sine', 0.05); break;
+    case 'toggle':   tone(520, 0.06, 'sine', 0.06); tone(760, 0.07, 'sine', 0.055, 0.04); break;
+    case 'add':      tone(440, 0.09, 'triangle', 0.065, 0, 680); break;
+    case 'delete':   tone(420, 0.1, 'sine', 0.06, 0, 210); break;
+    case 'complete': [523, 659, 784].forEach((f, i) => tone(f, 0.16, 'sine', 0.07, i * 0.06)); break;
+    case 'ding':     tone(1046, 0.5, 'sine', 0.09, 0, 900); break;
+    case 'error':    tone(180, 0.22, 'sawtooth', 0.05, 0, 130); break;
   }
 }
 function keyTick() {
@@ -733,7 +741,7 @@ function keyTick() {
   const o = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter();
   o.type = 'square'; o.frequency.value = 780 + Math.random() * 380;
   f.type = 'highpass'; f.frequency.value = 550;
-  g.gain.setValueAtTime(0.045, t);
+  g.gain.setValueAtTime(0.09, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
   o.connect(f); f.connect(g); g.connect(c.destination);
   o.start(t); o.stop(t + 0.04);
