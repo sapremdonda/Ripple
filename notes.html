@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Notes · Ripple</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#8b5cf6">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -15,22 +19,50 @@
   <main class="shell">
     <header class="page-head">
       <span class="eyebrow">Think out loud</span>
-      <h1>Notes</h1>
-      <p>Everything saves the moment you stop typing. No save button to chase.</p>
+      <h1>Notes &amp; diary</h1>
+      <p>Quick notes for ideas, and a dated diary for how the day went. Everything saves as you type.</p>
     </header>
 
-    <section class="notes-layout">
+    <div class="seg" id="notesMode" style="margin-bottom:20px">
+      <button class="active" data-mode="notes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v13l-4 4H4z"/><path d="M16 21v-4h4"/></svg>
+        Notes
+      </button>
+      <button data-mode="diary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M9 3v18"/></svg>
+        Diary
+      </button>
+    </div>
+
+    <!-- NOTES -->
+    <section class="notes-layout" id="notesView">
       <aside class="card" style="padding:14px">
         <button class="btn" id="newNote" style="width:100%;justify-content:center;margin-bottom:12px">+ New note</button>
         <div class="notes-list" id="noteList"></div>
       </aside>
-
       <section class="card note-editor" id="noteEditor">
         <input class="field title-in" id="noteTitle" placeholder="Untitled" maxlength="80">
         <textarea class="field body-in" id="noteBody" placeholder="Start writing…"></textarea>
         <div class="note-meta" id="noteMeta">
           <span class="stamp">Not saved yet</span>
           <button class="link-btn" id="delNote">Delete note</button>
+        </div>
+      </section>
+    </section>
+
+    <!-- DIARY -->
+    <section class="notes-layout" id="diaryView" hidden>
+      <aside class="card" style="padding:14px">
+        <button class="btn" id="diaryToday" style="width:100%;justify-content:center;margin-bottom:12px">Today’s entry</button>
+        <div class="notes-list" id="diaryList"></div>
+      </aside>
+      <section class="card note-editor" id="diaryEditor">
+        <div class="diary-date" id="diaryDate">Today</div>
+        <div class="mood-row" id="moodRow"></div>
+        <textarea class="field body-in" id="diaryBody" placeholder="How was today? What happened, how did it feel?"></textarea>
+        <div class="note-meta">
+          <span class="stamp" id="diaryStamp">Not saved yet</span>
+          <button class="link-btn" id="diaryDel">Delete entry</button>
         </div>
       </section>
     </section>

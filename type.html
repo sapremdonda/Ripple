@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Type · Ripple</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#8b5cf6">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="type">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Keys &amp; clicks</span>
+      <h1>Type</h1>
+      <p>Measure your speed, or just type for the calm clicky feel. Sounds follow your settings.</p>
+    </header>
+
+    <div class="seg" id="typeMode" style="margin-bottom:20px">
+      <button class="active" data-mode="test">Speed test</button>
+      <button data-mode="free">Free type</button>
+    </div>
+
+    <!-- SPEED TEST -->
+    <section class="card type-card" id="testView">
+      <div class="type-stats">
+        <div><span id="wpm">0</span><label>WPM</label></div>
+        <div><span id="acc">100%</span><label>Accuracy</label></div>
+        <div><span id="timer">0s</span><label>Time</label></div>
+        <div><span id="best">0</span><label>Best WPM</label></div>
+      </div>
+      <div class="passage" id="passage"></div>
+      <textarea class="field type-input" id="typeInput" placeholder="Start typing to begin the clock…" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <div class="type-actions">
+        <button class="btn ghost" id="newPassage">New text</button>
+        <button class="btn" id="restart">Restart</button>
+      </div>
+    </section>
+
+    <!-- FREE TYPE -->
+    <section class="card type-card" id="freeView" hidden>
+      <p class="muted" style="margin-bottom:6px">Just type. Enjoy the clicks — no timer, no pressure.</p>
+      <div class="free-stats"><b id="freeChars">0</b> chars · <b id="freeWords">0</b> words</div>
+      <textarea class="field type-input" id="freeInput" placeholder="Type anything…" rows="8" spellcheck="false"></textarea>
+      <div class="type-actions">
+        <button class="btn ghost" id="freeClear">Clear</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
