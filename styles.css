@@ -751,3 +751,26 @@ select.field { cursor: pointer; appearance: none; -webkit-appearance: none;
   .set-row { flex-wrap: wrap; }
   .set-actions .btn { flex: 1 1 auto; justify-content: center; }
 }
+
+/* ============================================================
+   HOME — thought actions (API quote, listen, refresh)
+   ============================================================ */
+.quote.loading { opacity: .4; }
+.quote-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+.q-btn {
+  position: relative; overflow: hidden;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: var(--radius-pill);
+  background: var(--glass); border: 1px solid var(--glass-brd);
+  color: var(--ink-soft); font-weight: 500; font-size: .85rem; cursor: pointer;
+  backdrop-filter: blur(14px);
+  transition: color .3s var(--ease), background .3s var(--ease), transform .3s var(--ease), border-color .3s var(--ease);
+}
+.q-btn:hover { color: var(--ink); background: var(--glass-strong); transform: translateY(-2px); border-color: var(--glass-brd-strong); }
+.q-btn:active { transform: translateY(0) scale(.96); }
+.q-btn svg { width: 16px; height: 16px; }
+.q-btn.spin svg { animation: qspin .6s var(--ease-liquid); }
+@keyframes qspin { to { transform: rotate(360deg); } }
+.q-btn.speaking { color: #fff; background: linear-gradient(120deg, var(--teal), var(--blue)); border-color: transparent; }
+.q-btn.speaking svg { animation: speakPulse 1s var(--ease) infinite; }
+@keyframes speakPulse { 0%,100% { opacity: 1; } 50% { opacity: .55; } }

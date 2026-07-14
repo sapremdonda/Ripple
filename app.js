@@ -35,7 +35,7 @@ function toast(msg) {
 /* ---------- Ripple click ink ---------- */
 function attachRipples() {
   document.addEventListener('pointerdown', e => {
-    const el = e.target.closest('.btn, .icon-btn, .chip, .tool-link, .mode-switch button, .swap-btn, .nav-links a, .water-btns .icon-btn, .seg button, .mood-chip');
+    const el = e.target.closest('.btn, .icon-btn, .chip, .tool-link, .mode-switch button, .swap-btn, .nav-links a, .water-btns .icon-btn, .seg button, .mood-chip, .q-btn');
     if (!el) return;
     const r = el.getBoundingClientRect();
     const size = Math.max(r.width, r.height);
@@ -176,10 +176,54 @@ function initHome() {
   }
   tick(); setInterval(tick, 1000);
 
-  // quote of the day (stable per day)
-  const qIdx = parseInt(todayKey().replaceAll('-', ''), 10) % QUOTES.length;
-  const [qt, qa] = QUOTES[qIdx];
-  $('#quote').innerHTML = `“${qt}”<span>— ${qa}</span>`;
+  // thought of the moment — live from an API, with local fallback
+  const quoteEl = $('#quote');
+  const newBtn = $('#newQuote');
+  const speakBtn = $('#speakQuote');
+  let currentThought = { text: '', author: '' };
+
+  function renderThought(t) {
+    currentThought = t;
+    quoteEl.innerHTML = `“${escapeHtml(t.text)}”<span>— ${escapeHtml(t.author)}</span>`;
+  }
+  function localThought() {
+    const [text, author] = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    return { text, author };
+  }
+  async function loadThought() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    speakBtn.classList.remove('speaking');
+    quoteEl.classList.add('loading');
+    newBtn.classList.add('spin');
+    try {
+      const r = await fetch('https://dummyjson.com/quotes/random', { cache: 'no-store' });
+      if (!r.ok) throw new Error('bad response');
+      const d = await r.json();
+      if (!d || !d.quote) throw new Error('no quote');
+      renderThought({ text: d.quote, author: d.author || 'Unknown' });
+    } catch {
+      renderThought(localThought()); // offline or API down — never leave it blank
+    } finally {
+      quoteEl.classList.remove('loading');
+      setTimeout(() => newBtn.classList.remove('spin'), 500);
+    }
+  }
+  newBtn.addEventListener('click', loadThought);
+
+  // read the thought aloud (browser speech synthesis)
+  speakBtn.addEventListener('click', () => {
+    const synth = window.speechSynthesis;
+    if (!synth) { toast('Speech isn’t supported in this browser'); return; }
+    if (synth.speaking) { synth.cancel(); speakBtn.classList.remove('speaking'); return; }
+    if (!currentThought.text) return;
+    const u = new SpeechSynthesisUtterance(`${currentThought.text}. By ${currentThought.author}.`);
+    u.rate = 0.95;
+    u.onend = u.onerror = () => speakBtn.classList.remove('speaking');
+    speakBtn.classList.add('speaking');
+    synth.speak(u);
+  });
+
+  loadThought();
 
   // live stats
   const tasks = store.get('tasks', []);
