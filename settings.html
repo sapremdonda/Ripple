@@ -118,6 +118,36 @@
         </div>
       </section>
 
+      <!-- Reading voice -->
+      <section class="card set-card">
+        <div class="set-head">
+          <span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></span>
+          <h3>Reading voice</h3>
+        </div>
+        <div class="set-row">
+          <div><div class="set-title">Voice</div><div class="set-sub">Used by the Listen button</div></div>
+          <select class="field" id="setVoice" style="width:auto;min-width:170px;max-width:58%"></select>
+        </div>
+        <div class="set-row">
+          <div><div class="set-title">Speed</div><div class="set-sub">How fast it reads</div></div>
+          <input type="range" id="setRate" class="range" min="0.6" max="1.4" step="0.05">
+        </div>
+        <button class="btn ghost" id="previewVoice">Preview voice</button>
+      </section>
+
+      <!-- Admin (only when logged in) -->
+      <section class="card set-card" id="adminCard" hidden>
+        <div class="set-head">
+          <span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <h3>Admin</h3>
+        </div>
+        <p class="set-sub" style="margin-bottom:14px">You’re logged into the admin panel. Edit the site’s changelog from the changelog page.</p>
+        <div class="set-actions">
+          <a class="btn ghost" href="changelog.html">Open changelog editor</a>
+          <button class="btn coral" id="adminLogout">Log out of admin</button>
+        </div>
+      </section>
+
     </div>
   </main>
 </body>

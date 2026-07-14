@@ -1,0 +1,95 @@
+[
+  {
+    "v": "1.9",
+    "date": "2026-07-14",
+    "title": "Changelog & admin",
+    "items": [
+      "Added this changelog page so you can see what's new",
+      "Private admin panel to edit the changelog",
+      "More text-to-speech voices to choose from in Settings"
+    ]
+  },
+  {
+    "v": "1.8",
+    "date": "2026-07-14",
+    "title": "Install as an app",
+    "items": [
+      "Ripple is now installable from the address bar",
+      "Opens in its own window and works offline"
+    ]
+  },
+  {
+    "v": "1.7",
+    "date": "2026-07-13",
+    "title": "Credits",
+    "items": ["Added a small credits footer on every page"]
+  },
+  {
+    "v": "1.6",
+    "date": "2026-07-13",
+    "title": "Typing fix",
+    "items": ["Fixed the typing passage overflowing its box"]
+  },
+  {
+    "v": "1.5",
+    "date": "2026-07-12",
+    "title": "Calculator",
+    "items": [
+      "Added a scientific calculator to the Convert page",
+      "Trig, logs, powers, roots, factorial and percent",
+      "Full keyboard support"
+    ]
+  },
+  {
+    "v": "1.4",
+    "date": "2026-07-12",
+    "title": "Live thoughts",
+    "items": [
+      "The thought of the moment now comes from a live quotes API",
+      "A Listen button reads it aloud",
+      "A refresh button for a new thought"
+    ]
+  },
+  {
+    "v": "1.3",
+    "date": "2026-07-11",
+    "title": "Polish",
+    "items": [
+      "A proper gear icon for Settings",
+      "Refreshed the thoughts collection",
+      "Louder, clearer sound effects"
+    ]
+  },
+  {
+    "v": "1.2",
+    "date": "2026-07-11",
+    "title": "Big update",
+    "items": [
+      "Settings page",
+      "Soft interface sound effects",
+      "A flowing custom cursor",
+      "Type — speed test and free typing",
+      "A diary section inside Notes"
+    ]
+  },
+  {
+    "v": "1.1",
+    "date": "2026-07-10",
+    "title": "Identity",
+    "items": ["A new Ripple logo and favicons"]
+  },
+  {
+    "v": "1.0",
+    "date": "2026-07-10",
+    "title": "Ripple launches",
+    "items": [
+      "Home dashboard with a live clock",
+      "Tasks",
+      "Focus — a water-fill Pomodoro timer",
+      "Notes",
+      "Habits & water tracker",
+      "Unit converter",
+      "Liquid-glass design with light and dark themes"
+    ]
+  }
+]

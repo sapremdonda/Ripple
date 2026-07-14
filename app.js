@@ -104,6 +104,7 @@ function buildFooter() {
   f.innerHTML = `<div class="footer-inner">
     <span class="footer-mark">${logo('footLogo')}</span>
     <span class="footer-text">Made by <b>Saprem</b></span>
+    <a class="footer-link" href="changelog.html">Changelog</a>
   </div>`;
   document.body.appendChild(f);
 }
@@ -244,7 +245,9 @@ function initHome() {
     if (synth.speaking) { synth.cancel(); speakBtn.classList.remove('speaking'); return; }
     if (!currentThought.text) return;
     const u = new SpeechSynthesisUtterance(`${currentThought.text}. By ${currentThought.author}.`);
-    u.rate = 0.95;
+    const set = getSettings();
+    u.rate = set.rate || 1;
+    if (set.voice) { const v = synth.getVoices().find(x => x.name === set.voice); if (v) u.voice = v; }
     u.onend = u.onerror = () => speakBtn.classList.remove('speaking');
     speakBtn.classList.add('speaking');
     synth.speak(u);
@@ -913,7 +916,7 @@ function escapeHtml(s) {
 /* ============================================================
    SETTINGS + shared formatting
    ============================================================ */
-const SETTINGS_DEFAULTS = { time24: false, dateFormat: 'long', sound: true, cursor: true };
+const SETTINGS_DEFAULTS = { time24: false, dateFormat: 'long', sound: true, cursor: true, voice: '', rate: 1 };
 function getSettings() { return Object.assign({}, SETTINGS_DEFAULTS, store.get('settings', {})); }
 function saveSettings(s) { store.set('settings', s); }
 
@@ -1084,6 +1087,45 @@ function initSettings() {
     $('#fmtPreview').innerHTML = `<b>${t.main}${t.ap ? ' ' + t.ap : ''}</b> · ${formatDate(d, true)}`;
   }
   renderPreview();
+
+  // reading voice
+  const voiceSel = $('#setVoice');
+  function fillVoices() {
+    const voices = (window.speechSynthesis ? window.speechSynthesis.getVoices() : []) || [];
+    const cur = getSettings().voice;
+    voiceSel.innerHTML = `<option value="">System default</option>` +
+      voices.map(v => `<option value="${escapeHtml(v.name)}">${escapeHtml(v.name)} · ${escapeHtml(v.lang)}</option>`).join('');
+    voiceSel.value = cur || '';
+    if (!voices.length) voiceSel.innerHTML = `<option value="">System default</option>`;
+  }
+  fillVoices();
+  if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = fillVoices;
+  voiceSel.addEventListener('change', () => { const n = getSettings(); n.voice = voiceSel.value; saveSettings(n); });
+
+  const rate = $('#setRate');
+  rate.value = getSettings().rate || 1;
+  rate.addEventListener('input', () => { const n = getSettings(); n.rate = parseFloat(rate.value); saveSettings(n); });
+
+  $('#previewVoice').addEventListener('click', () => {
+    const synth = window.speechSynthesis;
+    if (!synth) { toast('Speech isn’t supported in this browser'); return; }
+    synth.cancel();
+    const s = getSettings();
+    const u = new SpeechSynthesisUtterance('This is how your thoughts will sound in Ripple.');
+    u.rate = s.rate || 1;
+    if (s.voice) { const v = synth.getVoices().find(x => x.name === s.voice); if (v) u.voice = v; }
+    synth.speak(u);
+  });
+
+  // admin card
+  const adminCard = $('#adminCard');
+  function refreshAdmin() { adminCard.hidden = !isAdmin(); }
+  refreshAdmin();
+  document.addEventListener('ripple:admin', refreshAdmin);
+  $('#adminLogout').addEventListener('click', () => {
+    setAdmin(false); document.dispatchEvent(new Event('ripple:admin'));
+    toast('Logged out of admin'); refreshAdmin();
+  });
 
   // data actions
   $('#resetActivity').addEventListener('click', async () => {
@@ -1260,6 +1302,174 @@ function initType() {
 }
 
 /* ============================================================
+   ADMIN + CHANGELOG (backend-backed, globally live)
+   ============================================================ */
+const CHANGELOG_API = '/.netlify/functions/changelog';
+const CHANGELOG_DEFAULT = [
+  { v: '1.0', date: '2026-07-10', title: 'Ripple launches',
+    items: ['Home, Tasks, Focus, Notes, Habits and Convert', 'Liquid-glass design with light and dark'] }
+];
+
+function isAdmin() { return store.get('admin', false) === true; }
+function setAdmin(on, pw) {
+  store.set('admin', !!on);
+  if (on && pw != null) store.set('adminpw', pw);
+  if (!on) store.del('adminpw');
+}
+function adminPw() { return store.get('adminpw', ''); }
+
+async function fetchLiveChangelog() {
+  try {
+    const r = await fetch(CHANGELOG_API, { cache: 'no-store' });
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.data)) return j.data; }
+  } catch {}
+  try {
+    const r = await fetch('changelog.json', { cache: 'no-store' });
+    if (r.ok) { const d = await r.json(); if (Array.isArray(d)) return d; }
+  } catch {}
+  return CHANGELOG_DEFAULT;
+}
+async function adminVerify(password) {
+  try {
+    const r = await fetch(CHANGELOG_API, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify', password })
+    });
+    return r.ok;
+  } catch { return false; }
+}
+async function adminSave(password, data) {
+  const r = await fetch(CHANGELOG_API, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'save', password, data })
+  });
+  if (!r.ok) throw new Error('save failed ' + r.status);
+  return true;
+}
+
+/* secret-code login (type "admin-access" anywhere) */
+function openAdminLogin() {
+  if (isAdmin()) { toast('You’re already in admin mode'); return; }
+  if (document.querySelector('.admin-login')) return;
+  const scrim = document.createElement('div');
+  scrim.className = 'modal-scrim admin-login';
+  scrim.innerHTML = `<div class="card modal">
+    <div class="modal-logo">${logo('adminLogo')}</div>
+    <h2>Admin access</h2>
+    <p>Enter your password to edit the changelog.</p>
+    <input class="field" id="adminPwIn" type="password" placeholder="Password" autocomplete="off">
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:4px">
+      <button class="btn ghost" data-a="cancel">Cancel</button>
+      <button class="btn" data-a="ok">Unlock</button>
+    </div></div>`;
+  document.body.appendChild(scrim);
+  const pw = scrim.querySelector('#adminPwIn'); pw.focus();
+  const submit = async () => {
+    if (!pw.value) return;
+    pw.disabled = true;
+    const ok = await adminVerify(pw.value);
+    if (ok) {
+      setAdmin(true, pw.value); scrim.remove();
+      toast('Admin unlocked 🔓'); sfx('complete');
+      document.dispatchEvent(new Event('ripple:admin'));
+    } else {
+      pw.disabled = false; pw.value = ''; pw.placeholder = 'Wrong password (or backend not set up)'; sfx('error');
+    }
+  };
+  scrim.addEventListener('click', e => {
+    const a = e.target.closest('[data-a]'); if (!a) return;
+    if (a.dataset.a === 'ok') submit(); else scrim.remove();
+  });
+  pw.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+}
+
+function initChangelog() {
+  const view = $('#changelogView');
+  const bar = $('#adminBar');
+  let data = [];
+  let loading = true;
+
+  const relDate = d => {
+    if (!d) return '';
+    const [y, m, day] = String(d).split('-').map(Number);
+    const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1];
+    return mo ? `${day} ${mo} ${y}` : d;
+  };
+
+  const publicCard = rel => `
+    <article class="rel">
+      <div class="rel-side"><span class="rel-v">v${escapeHtml(rel.v || '')}</span><span class="rel-date">${escapeHtml(relDate(rel.date))}</span></div>
+      <div class="rel-body">
+        <h3 class="rel-title">${escapeHtml(rel.title || '')}</h3>
+        <ul class="rel-items">${(rel.items || []).map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+      </div>
+    </article>`;
+
+  const editCard = (rel, idx) => `
+    <article class="rel editing" data-idx="${idx}">
+      <div class="rel-edit-top">
+        <input class="field rel-in" data-f="v" value="${escapeHtml(rel.v || '')}" placeholder="1.0">
+        <input class="field rel-in" data-f="date" value="${escapeHtml(rel.date || '')}" placeholder="YYYY-MM-DD">
+        <button class="del rel-del" aria-label="Delete release">${TRASH}</button>
+      </div>
+      <input class="field rel-in" data-f="title" value="${escapeHtml(rel.title || '')}" placeholder="Title">
+      <textarea class="field rel-in rel-items-in" data-f="items" placeholder="One change per line">${escapeHtml((rel.items || []).join('\n'))}</textarea>
+    </article>`;
+
+  function render() {
+    if (loading) { bar.hidden = true; view.innerHTML = '<div class="empty"><p>Loading…</p></div>'; return; }
+    if (isAdmin()) {
+      bar.hidden = false;
+      bar.innerHTML = `<div class="admin-inner">
+        <div class="admin-top"><span class="admin-tag">🔓 Admin</span>
+          <div class="admin-actions">
+            <button class="btn ghost" data-a="add">Add release</button>
+            <button class="btn ghost" data-a="reload">Reload</button>
+            <button class="btn" data-a="save">Publish live</button>
+            <button class="btn coral" data-a="logout">Log out</button>
+          </div>
+        </div>
+        <p class="admin-note">Edits publish for everyone the moment you hit “Publish live”.</p>
+      </div>`;
+      view.innerHTML = data.map(editCard).join('') || '<div class="empty"><p>No entries. Add one to begin.</p></div>';
+    } else {
+      bar.hidden = true;
+      view.innerHTML = data.length ? data.map(publicCard).join('') : '<div class="empty"><p>No entries yet.</p></div>';
+    }
+  }
+
+  async function load() { loading = true; render(); data = await fetchLiveChangelog(); loading = false; render(); }
+
+  view.addEventListener('input', e => {
+    const art = e.target.closest('.rel.editing'); if (!art) return;
+    const idx = +art.dataset.idx; const f = e.target.dataset.f; if (!f || !data[idx]) return;
+    if (f === 'items') data[idx].items = e.target.value.split('\n').map(s => s.trim()).filter(Boolean);
+    else data[idx][f] = e.target.value;
+  });
+  view.addEventListener('click', e => {
+    const del = e.target.closest('.rel-del'); if (!del) return;
+    const idx = +del.closest('.rel').dataset.idx;
+    data.splice(idx, 1); render(); sfx('delete');
+  });
+  bar.addEventListener('click', async e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a;
+    if (a === 'add') { data.unshift({ v: '', date: todayKey(), title: '', items: [] }); render(); sfx('add'); }
+    else if (a === 'reload') { load(); }
+    else if (a === 'logout') { setAdmin(false); document.dispatchEvent(new Event('ripple:admin')); toast('Logged out of admin'); render(); }
+    else if (a === 'save') {
+      b.disabled = true; const label = b.textContent; b.textContent = 'Publishing…';
+      try { await adminSave(adminPw(), data); toast('Published — live for everyone 🌊'); sfx('complete'); }
+      catch { toast('Couldn’t publish — check the backend is set up'); sfx('error'); }
+      finally { b.disabled = false; b.textContent = label; }
+    }
+  });
+  document.addEventListener('ripple:admin', render);
+
+  load();
+}
+
+/* ============================================================
    Boot
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1267,10 +1477,19 @@ document.addEventListener('DOMContentLoaded', () => {
   buildFooter();
   attachRipples();
   Cursor.set(getSettings().cursor);
+
+  // secret code: type "admin-access" anywhere to open the admin login
+  let codeBuf = '';
+  document.addEventListener('keydown', e => {
+    if (!e.key || e.key.length !== 1) return;
+    codeBuf = (codeBuf + e.key.toLowerCase()).slice(-24);
+    if (codeBuf.endsWith('admin-access')) { codeBuf = ''; openAdminLogin(); }
+  });
+
   const routes = {
     home: initHome, tasks: initTasks, focus: initFocus,
     notes: initNotes, habits: initHabits, tools: initTools,
-    settings: initSettings, type: initType
+    settings: initSettings, type: initType, changelog: initChangelog
   };
   const page = document.body.dataset.page;
   if (routes[page]) routes[page]();

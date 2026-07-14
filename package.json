@@ -1,0 +1,9 @@
+{
+  "name": "ripple",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ripple — your daily companion",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0"
+  }
+}
