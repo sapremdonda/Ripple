@@ -811,3 +811,20 @@ select.field { cursor: pointer; appearance: none; -webkit-appearance: none;
   .calc-btn { padding: 13px 0; font-size: .98rem; }
   .calc-btn.fn { font-size: .82rem; }
 }
+
+/* ============================================================
+   SITE FOOTER (credits)
+   ============================================================ */
+.site-footer { padding: 12px 20px 44px; text-align: center; }
+.footer-inner {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 9px 18px; border-radius: var(--radius-pill);
+  background: var(--glass); border: 1px solid var(--glass-brd);
+  backdrop-filter: blur(14px) saturate(140%);
+  color: var(--ink-soft); font-size: .88rem;
+  transition: border-color .3s var(--ease), background .3s var(--ease);
+}
+.footer-inner:hover { border-color: var(--glass-brd-strong); background: var(--glass-strong); }
+.footer-mark { display: inline-flex; }
+.footer-mark .logo-mark { width: 22px; height: 22px; }
+.footer-text b { color: var(--ink); font-weight: 700; }

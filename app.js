@@ -81,6 +81,18 @@ function logo(id = 'rg') {
   </svg>`;
 }
 
+/* Site-wide credits footer (injected on every page) */
+function buildFooter() {
+  if (document.querySelector('.site-footer')) return;
+  const f = document.createElement('footer');
+  f.className = 'site-footer';
+  f.innerHTML = `<div class="footer-inner">
+    <span class="footer-mark">${logo('footLogo')}</span>
+    <span class="footer-text">Made by <b>Saprem</b> · with help from Claude</span>
+  </div>`;
+  document.body.appendChild(f);
+}
+
 function buildNav() {
   const nav = $('#nav');
   if (!nav) return;
@@ -1219,6 +1231,7 @@ function initType() {
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
   buildNav();
+  buildFooter();
   attachRipples();
   Cursor.set(getSettings().cursor);
   const routes = {
