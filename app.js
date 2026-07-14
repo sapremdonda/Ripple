@@ -35,7 +35,7 @@ function toast(msg) {
 /* ---------- Ripple click ink ---------- */
 function attachRipples() {
   document.addEventListener('pointerdown', e => {
-    const el = e.target.closest('.btn, .icon-btn, .chip, .tool-link, .mode-switch button, .swap-btn, .nav-links a, .water-btns .icon-btn, .seg button, .mood-chip, .q-btn');
+    const el = e.target.closest('.btn, .icon-btn, .chip, .tool-link, .mode-switch button, .swap-btn, .nav-links a, .water-btns .icon-btn, .seg button, .mood-chip, .q-btn, .calc-btn');
     if (!el) return;
     const r = el.getBoundingClientRect();
     const size = Math.max(r.width, r.height);
@@ -643,6 +643,157 @@ function initHabits() {
 }
 
 /* ============================================================
+   CALCULATOR — scientific, parsed (no eval)
+   ============================================================ */
+const CALC_FUNCS = ['asin', 'acos', 'atan', 'sin', 'cos', 'tan', 'log', 'ln', 'sqrt', 'abs', 'exp'];
+const FUNC_TOKENS = ['asin(', 'acos(', 'atan(', 'sin(', 'cos(', 'tan(', 'log(', 'ln(', '√(', 'abs(', 'exp('];
+
+function calcTokenize(s) {
+  s = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/√/g, 'sqrt').replace(/π/g, 'PI');
+  const out = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (c === ' ') { i++; continue; }
+    if (/[0-9.]/.test(c)) { let n = ''; while (i < s.length && /[0-9.]/.test(s[i])) n += s[i++]; out.push({ type: 'num', v: n }); continue; }
+    if (/[a-zA-Z]/.test(c)) {
+      let id = ''; while (i < s.length && /[a-zA-Z]/.test(s[i])) id += s[i++];
+      if (id === 'PI') out.push({ type: 'const', v: 'PI' });
+      else if (id === 'e') out.push({ type: 'const', v: 'E' });
+      else if (CALC_FUNCS.includes(id)) out.push({ type: 'func', v: id });
+      else throw new Error('bad name');
+      continue;
+    }
+    if ('+-*/^!%()'.includes(c)) { out.push({ type: 'op', v: c }); i++; continue; }
+    throw new Error('bad char');
+  }
+  return out;
+}
+function calcEval(input, deg) {
+  const tk = calcTokenize(input);
+  let i = 0;
+  const peek = () => tk[i], next = () => tk[i++];
+  const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+  const fact = n => { if (n < 0 || !Number.isInteger(n)) throw new Error('fact'); let r = 1; for (let k = 2; k <= n; k++) r *= k; return r; };
+
+  function expr() { let v = term(); while (peek() && (peek().v === '+' || peek().v === '-')) { const o = next().v; const r = term(); v = o === '+' ? v + r : v - r; } return v; }
+  function term() { let v = unary(); while (peek() && (peek().v === '*' || peek().v === '/')) { const o = next().v; const r = unary(); v = o === '*' ? v * r : v / r; } return v; }
+  function unary() { if (peek() && (peek().v === '-' || peek().v === '+')) { const o = next().v; const r = unary(); return o === '-' ? -r : r; } return power(); }
+  function power() { const b = postfix(); if (peek() && peek().v === '^') { next(); const e = unary(); return Math.pow(b, e); } return b; }
+  function postfix() { let v = primary(); while (peek() && (peek().v === '!' || peek().v === '%')) { const o = next().v; v = o === '!' ? fact(v) : v / 100; } return v; }
+  function primary() {
+    const t = peek(); if (!t) throw new Error('end');
+    if (t.type === 'num') { next(); return parseFloat(t.v); }
+    if (t.type === 'const') { next(); return t.v === 'PI' ? Math.PI : Math.E; }
+    if (t.type === 'func') { next(); expect('('); const a = expr(); expect(')'); return applyFn(t.v, a); }
+    if (t.v === '(') { next(); const v = expr(); expect(')'); return v; }
+    throw new Error('unexpected');
+  }
+  function expect(ch) { const t = next(); if (!t || t.v !== ch) throw new Error('expected ' + ch); }
+  function applyFn(name, x) {
+    switch (name) {
+      case 'sin': return Math.sin(deg ? x * D2R : x);
+      case 'cos': return Math.cos(deg ? x * D2R : x);
+      case 'tan': return Math.tan(deg ? x * D2R : x);
+      case 'asin': return (deg ? R2D : 1) * Math.asin(x);
+      case 'acos': return (deg ? R2D : 1) * Math.acos(x);
+      case 'atan': return (deg ? R2D : 1) * Math.atan(x);
+      case 'log': return Math.log10(x);
+      case 'ln': return Math.log(x);
+      case 'sqrt': return Math.sqrt(x);
+      case 'abs': return Math.abs(x);
+      case 'exp': return Math.exp(x);
+    }
+    throw new Error('fn');
+  }
+  const r = expr();
+  if (i < tk.length) throw new Error('trailing');
+  return r;
+}
+function calcFormat(x) {
+  if (!isFinite(x)) return 'Error';
+  const r = Math.round(x * 1e10) / 1e10;
+  return String(Object.is(r, -0) ? 0 : r);
+}
+
+const CALC_KEYS = [
+  ['DEG', 'degrad', 'degrad'], ['(', '(', 'op'], [')', ')', 'op'], ['⌫', 'back', 'op'], ['C', 'clear', 'warn'],
+  ['sin', 'sin(', 'fn'], ['cos', 'cos(', 'fn'], ['tan', 'tan(', 'fn'], ['xʸ', '^', 'op'], ['√', '√(', 'fn'],
+  ['sin⁻¹', 'asin(', 'fn'], ['cos⁻¹', 'acos(', 'fn'], ['tan⁻¹', 'atan(', 'fn'], ['x²', '^2', 'fn'], ['%', '%', 'op'],
+  ['log', 'log(', 'fn'], ['ln', 'ln(', 'fn'], ['π', 'π', 'fn'], ['e', 'e', 'fn'], ['n!', '!', 'op'],
+  ['7', '7', ''], ['8', '8', ''], ['9', '9', ''], ['÷', '÷', 'op'], ['×', '×', 'op'],
+  ['4', '4', ''], ['5', '5', ''], ['6', '6', ''], ['−', '−', 'op'], ['+', '+', 'op'],
+  ['1', '1', ''], ['2', '2', ''], ['3', '3', ''], ['.', '.', ''], ['Ans', 'ans', 'accent'],
+  ['0', '0', 'span3'], ['=', 'eq', 'eq span2']
+];
+
+function initCalc() {
+  const keysEl = $('#calcKeys');
+  const exprEl = $('#calcExpr');
+  const prevEl = $('#calcPreview');
+  const calcView = $('#calcView');
+  if (!keysEl) return;
+
+  let expr = '';
+  let deg = true;
+  let lastAns = 0;
+
+  keysEl.innerHTML = CALC_KEYS.map(([label, val, cls]) =>
+    `<button class="calc-btn ${cls}" data-val="${val === '"' ? '&quot;' : escapeHtml(val)}">${label}</button>`).join('');
+
+  function render() {
+    exprEl.textContent = expr || '0';
+    if (!expr) { prevEl.textContent = ''; return; }
+    try { const r = calcEval(expr, deg); prevEl.textContent = isFinite(r) ? '= ' + calcFormat(r) : ''; }
+    catch { prevEl.textContent = ''; }
+  }
+  function backspace() {
+    for (const tokn of FUNC_TOKENS) { if (expr.endsWith(tokn)) { expr = expr.slice(0, -tokn.length); return; } }
+    expr = expr.slice(0, -1);
+  }
+  function equals() {
+    if (!expr) return;
+    try {
+      const r = calcEval(expr, deg);
+      if (!isFinite(r)) throw new Error('inf');
+      lastAns = r; expr = calcFormat(r);
+      exprEl.textContent = expr; prevEl.textContent = ''; sfx('complete');
+    } catch { prevEl.textContent = 'Error'; sfx('error'); }
+  }
+  function act(val) {
+    if (val === 'clear') { expr = ''; }
+    else if (val === 'back') { backspace(); }
+    else if (val === 'eq') { equals(); return; }
+    else if (val === 'ans') { expr += calcFormat(lastAns); }
+    else if (val === 'degrad') { deg = !deg; $('.calc-btn.degrad').textContent = deg ? 'DEG' : 'RAD'; render(); return; }
+    else { expr += val; }
+    render();
+  }
+
+  keysEl.addEventListener('click', e => {
+    const b = e.target.closest('.calc-btn'); if (!b) return;
+    act(b.dataset.val);
+  });
+
+  // keyboard support (only while calculator is visible and not typing in a field)
+  const KEYMAP = { '*': '×', '/': '÷', '-': '−' };
+  document.addEventListener('keydown', e => {
+    if (calcView.hidden) return;
+    const ae = document.activeElement;
+    if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    const k = e.key;
+    if (k === 'Enter' || k === '=') { e.preventDefault(); act('eq'); }
+    else if (k === 'Backspace') { e.preventDefault(); act('back'); }
+    else if (k === 'Escape') { act('clear'); }
+    else if (/[0-9.]/.test(k)) act(k);
+    else if ('+()^!%'.includes(k)) act(k);
+    else if (KEYMAP[k]) act(KEYMAP[k]);
+    else return;
+  });
+
+  render();
+}
+
+/* ============================================================
    TOOLS — unit converter
    ============================================================ */
 const CONV = {
@@ -658,6 +809,19 @@ const CONV = {
 };
 
 function initTools() {
+  // convert | calculate toggle
+  const convertView = $('#convertView'), calcView = $('#calcView');
+  const tSeg = $('#toolsMode');
+  $$('button', tSeg).forEach(b => b.addEventListener('click', () => {
+    $$('button', tSeg).forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const m = b.dataset.mode;
+    convertView.hidden = m !== 'convert';
+    calcView.hidden = m !== 'calc';
+    sfx('tap');
+  }));
+  initCalc();
+
   let cat = 'length';
   const fromVal = $('#fromVal'), toVal = $('#toVal');
   const fromU = $('#fromUnit'), toU = $('#toUnit');

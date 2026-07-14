@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Convert · Ripple</title>
+  <title>Convert &amp; calculate · Ripple</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -19,11 +19,17 @@
   <main class="shell">
     <header class="page-head">
       <span class="eyebrow">Quick maths</span>
-      <h1>Convert</h1>
-      <p>Numbers change as you type — no equals button needed. Works fully offline.</p>
+      <h1>Convert &amp; calculate</h1>
+      <p>Switch units or run the numbers. Both work fully offline.</p>
     </header>
 
-    <section class="card">
+    <div class="seg" id="toolsMode" style="margin-bottom:20px">
+      <button class="active" data-mode="convert">Convert</button>
+      <button data-mode="calc">Calculate</button>
+    </div>
+
+    <!-- CONVERT -->
+    <section class="card" id="convertView">
       <div class="cat-tabs" id="catTabs"></div>
 
       <div class="conv-grid">
@@ -45,6 +51,15 @@
       </div>
 
       <div class="conv-result" id="convResult" style="display:none"></div>
+    </section>
+
+    <!-- CALCULATE -->
+    <section class="card calc-card" id="calcView" hidden>
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr">0</div>
+        <div class="calc-preview" id="calcPreview"></div>
+      </div>
+      <div class="calc-keys" id="calcKeys"></div>
     </section>
   </main>
 </body>
