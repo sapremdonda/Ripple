@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus · Ripple</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="focus">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head" style="text-align:center">
+      <span class="eyebrow" style="justify-content:center">Deep work</span>
+      <h1>Focus</h1>
+      <p style="margin:0 auto">Work in calm rounds. The orb fills like water as your time flows — four rounds earn a long break.</p>
+    </header>
+
+    <section class="focus-wrap">
+      <div class="mode-switch">
+        <button class="work active" data-mode="work">Focus</button>
+        <button class="short" data-mode="short">Short</button>
+        <button class="long" data-mode="long">Long</button>
+      </div>
+
+      <div class="timer-orb">
+        <div class="water" id="water" style="height:0%"></div>
+        <div class="timer-face">
+          <div class="timer-time" id="timerTime">25:00</div>
+          <div class="timer-state" id="timerState">Focus</div>
+        </div>
+      </div>
+
+      <div class="round-dots" id="roundDots"></div>
+
+      <div class="focus-controls">
+        <button class="btn ghost" id="resetBtn">Reset</button>
+        <button class="btn" id="startBtn">Start</button>
+      </div>
+
+      <div class="dur-config">
+        <label>Focus (min)<input class="field" id="dur-work" type="number" min="1" max="90"></label>
+        <label>Short (min)<input class="field" id="dur-short" type="number" min="1" max="90"></label>
+        <label>Long (min)<input class="field" id="dur-long" type="number" min="1" max="90"></label>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

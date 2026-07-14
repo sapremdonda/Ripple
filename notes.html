@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notes · Ripple</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="notes">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Think out loud</span>
+      <h1>Notes</h1>
+      <p>Everything saves the moment you stop typing. No save button to chase.</p>
+    </header>
+
+    <section class="notes-layout">
+      <aside class="card" style="padding:14px">
+        <button class="btn" id="newNote" style="width:100%;justify-content:center;margin-bottom:12px">+ New note</button>
+        <div class="notes-list" id="noteList"></div>
+      </aside>
+
+      <section class="card note-editor" id="noteEditor">
+        <input class="field title-in" id="noteTitle" placeholder="Untitled" maxlength="80">
+        <textarea class="field body-in" id="noteBody" placeholder="Start writing…"></textarea>
+        <div class="note-meta" id="noteMeta">
+          <span class="stamp">Not saved yet</span>
+          <button class="link-btn" id="delNote">Delete note</button>
+        </div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

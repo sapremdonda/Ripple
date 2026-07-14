@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tasks · Ripple</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="tasks">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Today</span>
+      <h1>Tasks</h1>
+      <p>Capture what needs doing, set how urgent it is, and watch the list shrink.</p>
+    </header>
+
+    <section class="card">
+      <div class="add-row">
+        <input class="field" id="taskInput" placeholder="What needs doing?" maxlength="120">
+        <select class="field" id="taskPri" aria-label="Priority">
+          <option value="low">Low</option>
+          <option value="med" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+        <button class="btn" id="addTask">Add</button>
+      </div>
+
+      <div class="filters">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="active">Active</button>
+        <button class="chip" data-filter="done">Done</button>
+      </div>
+
+      <ul class="task-list" id="taskList"></ul>
+
+      <div class="list-foot">
+        <span id="taskCount">0 tasks left</span>
+        <button class="link-btn" id="clearDone">Clear finished</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

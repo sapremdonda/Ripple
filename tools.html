@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convert · Ripple</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="tools">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Quick maths</span>
+      <h1>Convert</h1>
+      <p>Numbers change as you type — no equals button needed. Works fully offline.</p>
+    </header>
+
+    <section class="card">
+      <div class="cat-tabs" id="catTabs"></div>
+
+      <div class="conv-grid">
+        <div class="conv-cell">
+          <label for="fromVal">From</label>
+          <input class="field" id="fromVal" type="number" inputmode="decimal" placeholder="0">
+          <select class="field" id="fromUnit" style="margin-top:10px"></select>
+        </div>
+
+        <button class="swap-btn" id="swapBtn" aria-label="Swap units">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v13M7 4L4 7M7 4l3 3M17 20V7M17 20l3-3M17 20l-3-3"/></svg>
+        </button>
+
+        <div class="conv-cell">
+          <label for="toVal">To</label>
+          <input class="field" id="toVal" type="number" placeholder="0" readonly>
+          <select class="field" id="toUnit" style="margin-top:10px"></select>
+        </div>
+      </div>
+
+      <div class="conv-result" id="convResult" style="display:none"></div>
+    </section>
+  </main>
+</body>
+</html>

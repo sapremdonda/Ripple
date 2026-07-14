@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Habits · Ripple</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="habits">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Every day</span>
+      <h1>Habits &amp; water</h1>
+      <p>Check off what you did today. Streaks build as the days stack up.</p>
+    </header>
+
+    <section class="habits-layout">
+      <div class="card">
+        <div class="add-row">
+          <input class="field" id="habitInput" placeholder="Add a daily habit" maxlength="60">
+          <button class="btn" id="addHabit">Add</button>
+        </div>
+        <ul class="habit-list" id="habitList"></ul>
+      </div>
+
+      <div class="card water-card">
+        <h3 style="margin-bottom:4px">Water intake</h3>
+        <p class="muted" style="font-size:.88rem">Aim for 8 glasses today</p>
+        <div class="glass-visual"><div class="glass-fill" id="glassFill" style="height:0%"></div></div>
+        <div class="water-count" id="waterCount"><b>0</b> / 8 glasses</div>
+        <div class="water-btns">
+          <button class="icon-btn" id="waterSub" aria-label="Remove a glass">−</button>
+          <button class="icon-btn" id="waterAdd" aria-label="Add a glass">+</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

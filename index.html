@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ripple · your daily companion</title>
+  <meta name="description" content="A calm daily companion: focus, tasks, notes, habits and quick tools.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="home">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <section class="hero-clock">
+      <div class="greeting" id="greeting">Hello</div>
+      <div class="clock" id="clock">00:00</div>
+      <div class="today-date" id="todayDate"></div>
+      <p class="quote" id="quote"></p>
+    </section>
+
+    <section class="stat-row">
+      <div class="stat s1"><div class="num" id="stTasks">0</div><div class="lbl">Tasks left</div></div>
+      <div class="stat s2"><div class="num" id="stFocus">0</div><div class="lbl">Focus rounds</div></div>
+      <div class="stat s3"><div class="num" id="stHabits">0</div><div class="lbl">Habits done</div></div>
+      <div class="stat s4"><div class="num" id="stWater">0</div><div class="lbl">Glasses of water</div></div>
+    </section>
+
+    <section class="tools-grid stagger">
+      <a class="tool-link" href="tasks.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <h3>Tasks</h3><p>Line up your day and check things off.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+      <a class="tool-link" href="focus.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg></span>
+        <h3>Focus</h3><p>A water-fill timer to keep you in flow.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+      <a class="tool-link" href="notes.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v13l-4 4H4z"/><path d="M16 21v-4h4M8 9h8M8 13h5"/></svg></span>
+        <h3>Notes</h3><p>Jot ideas down — they save as you type.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+      <a class="tool-link" href="habits.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9-9a5 5 0 0 1 9-2 5 5 0 0 1 9 2c-2 4.5-9 9-9 9z"/></svg></span>
+        <h3>Habits & water</h3><p>Build streaks and stay hydrated.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+      <a class="tool-link" href="tools.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M4 7l3-3M4 7l3 3M20 17H9M20 17l-3-3M20 17l-3 3"/></svg></span>
+        <h3>Convert</h3><p>Length, weight, temperature and more.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+      <a class="tool-link" href="focus.html">
+        <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></span>
+        <h3>Quick start</h3><p>Jump straight into a focus round.</p>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
