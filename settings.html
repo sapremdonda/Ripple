@@ -8,6 +8,11 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="theme-color" content="#8b5cf6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ripple">
   <link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
 </head>
@@ -61,6 +66,11 @@
         <div class="set-row">
           <div><div class="set-title">Sound effects</div><div class="set-sub">Soft taps and chimes</div></div>
           <div class="switch" id="swSound" tabindex="0"><span class="knob"></span></div>
+        </div>
+
+        <div class="set-row" id="installRow" hidden>
+          <div><div class="set-title">Install app</div><div class="set-sub">Keep Ripple on your device, opens in its own window</div></div>
+          <button class="btn" id="installBtn">Install</button>
         </div>
       </section>
 

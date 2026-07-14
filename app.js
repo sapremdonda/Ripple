@@ -22,6 +22,21 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   if (store.get('theme', 'dark') === 'light') document.documentElement.classList.add('light');
 })();
 
+/* ---------- PWA: capture install prompt + register service worker ---------- */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.dispatchEvent(new Event('ripple:installable'));
+});
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  document.dispatchEvent(new Event('ripple:installed'));
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
+
 /* ---------- Toast ---------- */
 function toast(msg) {
   let wrap = $('.toast-wrap');
@@ -1092,6 +1107,24 @@ function initSettings() {
       location.href = 'index.html';
     }
   });
+
+  // install (PWA) — shown only when the browser offers it, or already installed
+  const installRow = $('#installRow'), installBtn = $('#installBtn');
+  function refreshInstall() {
+    const installed = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+    if (installed) { installRow.hidden = false; installBtn.textContent = 'Installed'; installBtn.disabled = true; return; }
+    installRow.hidden = !deferredPrompt;
+  }
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') toast('Adding Ripple to your device…');
+    deferredPrompt = null; refreshInstall();
+  });
+  document.addEventListener('ripple:installable', refreshInstall);
+  document.addEventListener('ripple:installed', () => { toast('Ripple installed 🌊'); refreshInstall(); });
+  refreshInstall();
 
   // helpers scoped here
   function setSeg(sel, active, cb) {
