@@ -1205,3 +1205,162 @@ body { overscroll-behavior-y: contain; }
     0 0 0 1px rgba(45,212,191,.5);
 }
 .cursor-dot { width: 6px; height: 6px; margin: -3px 0 0 -3px; }
+
+/* ============================================================
+   HORIZONTAL SCROLL — hard stop
+   `overflow-x: hidden` on body alone is ignored by iOS Safari in
+   several situations. `clip` is honoured and, unlike `hidden`,
+   doesn't turn the element into a scroll container, so the sticky
+   nav keeps working.
+   ============================================================ */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;   /* fallback */
+  overflow-x: clip;     /* wins where supported */
+  overscroll-behavior-x: none;
+}
+/* flex/grid children default to min-width:auto and refuse to shrink
+   below their content — the classic source of a few stray pixels */
+.shell, .nav, .site-footer, .card, .widget,
+.notes-layout, .habits-layout, .settings-grid, .ins-grid,
+.tools-grid, .stat-row, .conv-grid, .add-row, .set-row,
+.chart, .ring-wrap, .mixer-grid, .calc-keys, .type-stats, .filters, .cat-tabs {
+  min-width: 0;
+  max-width: 100%;
+}
+.task-text, .h-name, .note-item h4, .note-item p, .rel-items li, .misc-row { min-width: 0; overflow-wrap: anywhere; }
+img, svg, video, canvas { max-width: 100%; }
+
+/* ============================================================
+   MOBILE NAV — solid, outlined, no blur
+   ============================================================ */
+:root { --nav-solid: #101a30; --nav-outline: rgba(255,255,255,.34); }
+:root.light { --nav-solid: #ffffff; --nav-outline: rgba(40,60,120,.34); }
+
+@media (max-width: 760px) {
+  .nav {
+    margin: 0 12px 22px;
+    background: var(--nav-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1.5px solid var(--nav-outline);
+    box-shadow: 0 10px 28px -8px rgba(0,0,0,.7), 0 0 0 1px rgba(139,92,246,.28);
+  }
+  :root.light .nav { box-shadow: 0 10px 26px -10px rgba(40,60,120,.45), 0 0 0 1px rgba(139,92,246,.22); }
+  .nav-links {
+    background: var(--nav-solid);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1.5px solid var(--nav-outline);
+    box-shadow: 0 16px 34px -10px rgba(0,0,0,.75);
+  }
+  .nav-links a { color: var(--ink); }
+  .icon-btn { border-color: var(--nav-outline); }
+}
+
+/* ============================================================
+   MAGNIFIER LENS
+   ============================================================ */
+.cursor-lens {
+  position: fixed; top: 0; left: 0; z-index: 9998;
+  width: 104px; height: 104px; border-radius: 50%;
+  overflow: hidden; pointer-events: none;
+  background: var(--bg);
+  border: 1.5px solid rgba(255,255,255,.42);
+  box-shadow:
+    inset 0 2px 12px rgba(255,255,255,.22),
+    inset 0 -14px 26px rgba(0,0,0,.3),
+    0 10px 30px rgba(0,0,0,.5),
+    0 0 0 1px rgba(139,92,246,.45);
+  will-change: transform;
+}
+:root.light .cursor-lens {
+  border-color: rgba(255,255,255,.85);
+  box-shadow: inset 0 2px 12px rgba(255,255,255,.9), inset 0 -14px 26px rgba(40,60,120,.14),
+              0 10px 26px rgba(40,60,120,.3), 0 0 0 1px rgba(139,92,246,.35);
+}
+.cursor-lens-inner {
+  position: absolute; top: 0; left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+/* the copy is decoration only — strip anything expensive or misleading */
+.cursor-lens-inner * {
+  animation: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  cursor: none !important;
+}
+.cursor-lens-inner .liquid-bg,
+.cursor-lens-inner .cursor-dot,
+.cursor-lens-inner .cursor-ring,
+.cursor-lens-inner .cursor-lens,
+.cursor-lens-inner .widget-grip,
+.cursor-lens-inner .widget-move { display: none !important; }
+.cursor-lens-inner .card,
+.cursor-lens-inner .nav { background: var(--glass-strong); }
+/* glass dome over the magnified image */
+.cursor-lens-glare {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255,255,255,.28), rgba(255,255,255,.05) 42%, transparent 62%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,.22) 100%);
+}
+.cursor-lens-glare::after {
+  content: ''; position: absolute; left: 17%; top: 11%;
+  width: 40%; height: 24%; border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0));
+  transform: rotate(-18deg);
+}
+/* in lens mode the lens replaces the ring; keep a small locator dot */
+.cursor-lens-on .cursor-dot { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; z-index: 9999; }
+
+/* ============================================================
+   HOME WIDGETS (sortable)
+   ============================================================ */
+.widgets { display: flex; flex-direction: column; gap: 4px; }
+.widget { position: relative; border-radius: var(--radius); padding: 2px; transition: background .3s var(--ease), box-shadow .3s var(--ease); }
+.widget-grip, .widget-move { display: none; }
+
+.widgets.editing .widget {
+  background: var(--glass);
+  border: 1px dashed var(--glass-brd-strong);
+  padding: 10px 10px 10px 46px;
+  margin-bottom: 8px;
+}
+.widgets.editing .widget-grip {
+  display: grid; place-items: center;
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 44px; border: none; border-radius: 10px;
+  background: var(--glass-strong); color: var(--ink-faint);
+  cursor: grab; touch-action: none; z-index: 2;
+}
+.widgets.editing .widget-grip:active { cursor: grabbing; }
+.widget-grip svg { width: 18px; height: 18px; }
+.widgets.editing .widget-move {
+  display: flex; flex-direction: column; gap: 4px;
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 2;
+}
+.widget-move button {
+  width: 30px; height: 26px; border-radius: 8px; cursor: pointer;
+  background: var(--glass-strong); border: 1px solid var(--glass-brd);
+  color: var(--ink-soft); font-size: .8rem; line-height: 1;
+}
+.widget-move button:hover { color: var(--ink); border-color: var(--glass-brd-strong); }
+.widget.dragging {
+  position: fixed; z-index: 120; pointer-events: none;
+  opacity: .95; box-shadow: var(--shadow); background: var(--bg-2);
+  border-style: solid; border-color: var(--teal);
+}
+.widget-ph {
+  border-radius: var(--radius); margin-bottom: 8px;
+  background: rgba(45,212,191,.07);
+  border: 1px dashed var(--teal);
+}
+.layout-bar { display: flex; justify-content: center; margin-top: 20px; }
+
+@media (max-width: 760px) {
+  .widgets.editing .widget { padding: 10px 46px 10px 44px; }
+  .widget-move button { width: 34px; height: 30px; }
+}

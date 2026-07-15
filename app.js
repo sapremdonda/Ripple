@@ -98,7 +98,8 @@ const PAGES = [
   ['habits.html', 'Habits'],
   ['tools.html', 'Convert'],
   ['type.html', 'Type'],
-  ['insights.html', 'Insights']
+  ['insights.html', 'Insights'],
+  ['changelog.html', 'Changelog']
 ];
 const ICON = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>',
@@ -129,7 +130,6 @@ function buildFooter() {
   f.innerHTML = `<div class="footer-inner">
     <span class="footer-mark">${logo('footLogo')}</span>
     <span class="footer-text">Made by <b>Saprem</b></span>
-    <a class="footer-link" href="changelog.html">Changelog</a>
   </div>`;
   document.body.appendChild(f);
 }
@@ -299,6 +299,94 @@ function initHome() {
       card.style.setProperty('--my', (e.clientY - r.top) + 'px');
     });
   });
+
+  initWidgets();
+}
+
+/* ---- sortable home widgets (pointer drag + arrow fallback) ---- */
+function initWidgets() {
+  const box = $('#widgets');
+  if (!box) return;
+  const DEFAULT = ['clock', 'thought', 'stats', 'tools'];
+  const get = () => $$('.widget', box);
+  const save = () => store.set('home:order', get().map(w => w.dataset.w));
+
+  // restore saved order
+  const saved = store.get('home:order', null);
+  if (Array.isArray(saved)) {
+    const known = new Set(DEFAULT);
+    saved.filter(n => known.has(n)).forEach(n => {
+      const el = box.querySelector(`.widget[data-w="${n}"]`);
+      if (el) box.appendChild(el);
+    });
+    // anything new that isn't in the saved list stays at the end
+    DEFAULT.filter(n => !saved.includes(n)).forEach(n => {
+      const el = box.querySelector(`.widget[data-w="${n}"]`);
+      if (el) box.appendChild(el);
+    });
+  }
+
+  // edit mode
+  const btn = $('#editLayout'), label = $('#editLayoutLabel');
+  btn.addEventListener('click', () => {
+    const on = box.classList.toggle('editing');
+    label.textContent = on ? 'Done' : 'Rearrange';
+    btn.classList.toggle('speaking', on);
+    if (on) toast('Drag the handles, or use the arrows');
+    sfx('tap');
+  });
+
+  // arrows — dependable everywhere, especially on touch
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-move]'); if (!b) return;
+    const w = b.closest('.widget');
+    if (b.dataset.move === 'up' && w.previousElementSibling) box.insertBefore(w, w.previousElementSibling);
+    if (b.dataset.move === 'down' && w.nextElementSibling) box.insertBefore(w.nextElementSibling, w);
+    save(); sfx('tap');
+  });
+
+  // drag
+  let drag = null, ph = null, offY = 0;
+  box.addEventListener('pointerdown', e => {
+    const grip = e.target.closest('.widget-grip');
+    if (!grip || !box.classList.contains('editing')) return;
+    e.preventDefault();
+    drag = grip.closest('.widget');
+    const r = drag.getBoundingClientRect();
+    offY = e.clientY - r.top;
+    ph = document.createElement('div');
+    ph.className = 'widget-ph';
+    ph.style.height = r.height + 'px';
+    drag.after(ph);
+    drag.classList.add('dragging');
+    drag.style.width = r.width + 'px';
+    drag.style.left = r.left + 'px';
+    drag.style.top = r.top + 'px';
+    grip.setPointerCapture(e.pointerId);
+    sfx('tap');
+  });
+  box.addEventListener('pointermove', e => {
+    if (!drag) return;
+    drag.style.top = (e.clientY - offY) + 'px';
+    const others = get().filter(w => w !== drag);
+    let placed = false;
+    for (const s of others) {
+      const r = s.getBoundingClientRect();
+      if (e.clientY < r.top + r.height / 2) { box.insertBefore(ph, s); placed = true; break; }
+    }
+    if (!placed) box.appendChild(ph);
+  });
+  const end = () => {
+    if (!drag) return;
+    ph.replaceWith(drag);
+    drag.classList.remove('dragging');
+    drag.style.cssText = '';
+    drag = null; ph = null;
+    save(); sfx('add');
+    Cursor.refresh();
+  };
+  box.addEventListener('pointerup', end);
+  box.addEventListener('pointercancel', end);
 }
 
 /* ============================================================
@@ -1113,8 +1201,17 @@ function escapeHtml(s) {
 /* ============================================================
    SETTINGS + shared formatting
    ============================================================ */
-const SETTINGS_DEFAULTS = { time24: false, dateFormat: 'long', sound: true, cursor: true, voice: '', rate: 1 };
-function getSettings() { return Object.assign({}, SETTINGS_DEFAULTS, store.get('settings', {})); }
+const SETTINGS_DEFAULTS = { time24: false, dateFormat: 'long', sound: true, cursorMode: 'ring', voice: '', rate: 1 };
+function getSettings() {
+  const raw = store.get('settings', {}) || {};
+  const s = Object.assign({}, SETTINGS_DEFAULTS, raw);
+  // migrate the old boolean `cursor` setting. Check `raw`, not `s` — the
+  // default cursorMode would otherwise mask a missing stored value.
+  if (raw.cursorMode == null || !['off', 'ring', 'lens'].includes(raw.cursorMode)) {
+    s.cursorMode = raw.cursor === false ? 'off' : 'ring';
+  }
+  return s;
+}
 function saveSettings(s) { store.set('settings', s); }
 
 function formatTime(d) {
@@ -1185,37 +1282,147 @@ function keyTick() {
 /* ============================================================
    CUSTOM CURSOR (dot + flowing ring)
    ============================================================ */
+/* ============================================================
+   CURSOR — dot + ring, or a true magnifier lens.
+
+   The lens really magnifies: it keeps a live clone of the page
+   inside a circular window and scales it, so a document point
+   under the pointer lands dead centre. Cloned roots are pinned at
+   document coordinates, which is why sticky/fixed elements get
+   repositioned by hand.
+   ============================================================ */
 const Cursor = (() => {
-  let built = false, enabled = false, dot, ring, mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
+  const Z = 1.9;              // magnification
+  const R = 52;               // lens radius (px)
   const fine = matchMedia('(pointer: fine)').matches;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ROOTS = ['.nav', '.shell', '.site-footer'];
 
+  let mode = 'ring', built = false, lensBuilt = false;
+  let dot, ring, lens, inner, glare;
+  let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
+  let cloneMap = [];          // [{orig, clone}] so we can re-pin + sync values
+  let mo = null, recloneT = null, syncT = null;
+
+  /* ---- base cursor ---- */
   function build() {
     dot = document.createElement('div'); dot.className = 'cursor-dot';
     ring = document.createElement('div'); ring.className = 'cursor-ring';
     document.body.append(dot, ring);
+
     window.addEventListener('mousemove', e => {
       mx = e.clientX; my = e.clientY;
       dot.style.transform = `translate(${mx}px, ${my}px)`;
       if (reduce) ring.style.transform = `translate(${mx}px, ${my}px)`;
-    });
-    const hoverSel = 'a, button, input, textarea, select, .chip, .tool-link, .note-item, .mood-chip, .switch, .seg button';
+      if (mode === 'lens' && lens) placeLens();
+    }, { passive: true });
+
+    const hoverSel = 'a, button, input, textarea, select, .chip, .tool-link, .note-item, .mood-chip, .switch, .seg button, .accent-dot, .mix-cell, .calc-btn';
     document.addEventListener('pointerover', e => { if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover'); });
-    document.addEventListener('pointerout',  e => { if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover'); });
+    document.addEventListener('pointerout', e => { if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover'); });
+
     if (!reduce) (function loop() {
       rx += (mx - rx) * 0.16; ry += (my - ry) * 0.16;
-      ring.style.transform = `translate(${rx}px, ${ry}px)`;
+      if (ring) ring.style.transform = `translate(${rx}px, ${ry}px)`;
       requestAnimationFrame(loop);
     })();
     built = true;
   }
-  function set(on) {
-    enabled = on && fine;
-    document.body.classList.toggle('cursor-on', enabled);
-    if (enabled && !built) build();
-    if (built) { dot.style.display = ring.style.display = enabled ? 'block' : 'none'; }
+
+  /* ---- magnifier ---- */
+  function buildLens() {
+    lens = document.createElement('div'); lens.className = 'cursor-lens';
+    inner = document.createElement('div'); inner.className = 'cursor-lens-inner';
+    glare = document.createElement('div'); glare.className = 'cursor-lens-glare';
+    lens.append(inner, glare);
+    document.body.appendChild(lens);
+    reclone();
+
+    // keep the copy honest as the page changes
+    mo = new MutationObserver(muts => {
+      for (const m of muts) if (lens.contains(m.target)) return;   // ignore our own subtree
+      clearTimeout(recloneT); recloneT = setTimeout(reclone, 220);
+    });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
+
+    // cloneNode doesn't copy live field values, so mirror them on input
+    document.addEventListener('input', () => { clearTimeout(syncT); syncT = setTimeout(syncValues, 60); }, true);
+    // sticky/fixed roots move relative to the document as you scroll
+    window.addEventListener('scroll', () => { pinRoots(); placeLens(); }, { passive: true });
+    window.addEventListener('resize', () => { clearTimeout(recloneT); recloneT = setTimeout(reclone, 150); });
+    lensBuilt = true;
   }
-  return { set };
+
+  function reclone() {
+    if (!inner) return;
+    inner.textContent = '';
+    cloneMap = [];
+    inner.style.width = document.documentElement.clientWidth + 'px';
+
+    ROOTS.forEach(sel => {
+      const orig = document.querySelector(sel);
+      if (!orig) return;
+      const c = orig.cloneNode(true);
+      c.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
+      c.removeAttribute('id');
+      cloneMap.push({ orig, clone: c });
+      inner.appendChild(c);
+    });
+    pinRoots();
+    syncValues();
+    placeLens();
+  }
+
+  // pin each cloned root at its current document position
+  function pinRoots() {
+    cloneMap.forEach(({ orig, clone }) => {
+      const r = orig.getBoundingClientRect();
+      clone.style.position = 'absolute';
+      clone.style.margin = '0';
+      clone.style.top = (r.top + window.scrollY) + 'px';
+      clone.style.left = (r.left + window.scrollX) + 'px';
+      clone.style.width = r.width + 'px';
+    });
+  }
+
+  function syncValues() {
+    cloneMap.forEach(({ orig, clone }) => {
+      const a = orig.querySelectorAll('input, textarea, select');
+      const b = clone.querySelectorAll('input, textarea, select');
+      const n = Math.min(a.length, b.length);
+      for (let i = 0; i < n; i++) {
+        if (a[i].type === 'checkbox' || a[i].type === 'radio') b[i].checked = a[i].checked;
+        else if (b[i].tagName === 'TEXTAREA') b[i].textContent = a[i].value;
+        else b[i].value = a[i].value;
+      }
+    });
+  }
+
+  // map the document point under the pointer to the centre of the lens
+  function placeLens() {
+    if (!lens) return;
+    const dx = mx + window.scrollX, dy = my + window.scrollY;
+    lens.style.transform = `translate(${mx - R}px, ${my - R}px)`;
+    inner.style.transform = `translate(${R - Z * dx}px, ${R - Z * dy}px) scale(${Z})`;
+  }
+
+  function teardownLens() {
+    if (mo) { mo.disconnect(); mo = null; }
+    if (lens) { lens.remove(); lens = inner = glare = null; }
+    cloneMap = []; lensBuilt = false;
+  }
+
+  function set(m) {
+    mode = fine ? (m || 'ring') : 'off';
+    const on = mode !== 'off';
+    document.body.classList.toggle('cursor-on', on);
+    document.body.classList.toggle('cursor-lens-on', mode === 'lens');
+    if (on && !built) build();
+    if (built) { dot.style.display = on ? 'block' : 'none'; ring.style.display = (mode === 'ring') ? 'block' : 'none'; }
+    if (mode === 'lens') { if (!lensBuilt) buildLens(); else { reclone(); lens.style.display = 'block'; } }
+    else teardownLens();
+  }
+  return { set, refresh: () => { if (mode === 'lens' && lensBuilt) reclone(); } };
 })();
 
 /* ============================================================
@@ -1265,7 +1472,9 @@ function initSettings() {
   });
 
   // toggles
-  bindSwitch('#swCursor', s.cursor, on => { const n = getSettings(); n.cursor = on; saveSettings(n); Cursor.set(on); sfx('toggle'); });
+  setSeg('#segCursor', s.cursorMode, val => {
+    const n = getSettings(); n.cursorMode = val; saveSettings(n); Cursor.set(val); sfx('toggle');
+  });
   bindSwitch('#swSound', s.sound, on => { const n = getSettings(); n.sound = on; saveSettings(n); if (on) sfx('toggle'); });
 
   // time format
@@ -1918,7 +2127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buildNav();
   buildFooter();
   attachRipples();
-  Cursor.set(getSettings().cursor);
+  Cursor.set(getSettings().cursorMode);
 
   // secret code: type "admin-access" anywhere to open the admin login
   let codeBuf = '';
