@@ -1,6 +1,6 @@
 /* Ripple service worker.
    Bump CACHE when you change files so old copies are cleared. */
-const CACHE = 'ripple-v4';
+const CACHE = 'ripple-v5';
 const ASSETS = [
   'index.html', 'tasks.html', 'focus.html', 'notes.html', 'habits.html',
   'tools.html', 'settings.html', 'type.html', 'changelog.html', 'insights.html',
