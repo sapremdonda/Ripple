@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Insights · Ripple</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#8b5cf6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ripple">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="insights">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Your patterns</span>
+      <h1>Insights</h1>
+      <p>What the last week actually looked like, pulled from everything you've tracked.</p>
+    </header>
+
+    <div class="empty" id="insEmpty" hidden>
+      <div class="em-ic">📊</div>
+      <p>Nothing to show yet. Use Focus, Tasks or Habits for a few days and your patterns will appear here.</p>
+    </div>
+
+    <section class="stat-row" id="insHead"></section>
+
+    <div class="ins-grid">
+      <section class="card">
+        <h3 class="ins-title">Focus rounds</h3>
+        <p class="set-sub">Completed rounds each day</p>
+        <div id="insFocus"></div>
+      </section>
+
+      <section class="card">
+        <h3 class="ins-title">Habits completed</h3>
+        <p class="set-sub">Share of your habits done each day</p>
+        <div id="insHabits"></div>
+      </section>
+
+      <section class="card">
+        <h3 class="ins-title">Water</h3>
+        <p class="set-sub">Glasses per day</p>
+        <div id="insWater"></div>
+      </section>
+
+      <section class="card">
+        <h3 class="ins-title">Tasks</h3>
+        <p class="set-sub">How much you've cleared</p>
+        <div id="insTasks"></div>
+      </section>
+
+      <section class="card ins-wide">
+        <h3 class="ins-title">Everything else</h3>
+        <div id="insMisc"></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

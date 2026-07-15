@@ -17,10 +17,34 @@ const todayKey = () => new Date().toISOString().slice(0, 10);
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-/* ---------- Theme (applied ASAP to limit flash) ---------- */
+/* ---------- Theme + accent (applied ASAP to limit flash) ---------- */
 (function applyTheme() {
   if (store.get('theme', 'dark') === 'light') document.documentElement.classList.add('light');
+  const a = store.get('accent', 'ripple');
+  if (a && a !== 'ripple') document.documentElement.dataset.accent = a;
 })();
+
+/* ---------- Shared data layer (used by backup + sync) ---------- */
+/* Never leaves the device: admin credentials and the sync key itself. */
+const PRIVATE_KEYS = ['admin', 'adminpw', 'sync:key', 'sync:last'];
+function collectData() {
+  const out = {};
+  Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => {
+    const short = k.slice(NS.length);
+    if (PRIVATE_KEYS.includes(short)) return;
+    out[short] = localStorage.getItem(k);
+  });
+  return out;
+}
+function restoreData(data) {
+  Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => {
+    if (!PRIVATE_KEYS.includes(k.slice(NS.length))) localStorage.removeItem(k);
+  });
+  Object.entries(data).forEach(([k, v]) => {
+    if (PRIVATE_KEYS.includes(k)) return;
+    try { localStorage.setItem(NS + k, typeof v === 'string' ? v : JSON.stringify(v)); } catch {}
+  });
+}
 
 /* ---------- PWA: capture install prompt + register service worker ---------- */
 let deferredPrompt = null;
@@ -73,7 +97,8 @@ const PAGES = [
   ['notes.html', 'Notes'],
   ['habits.html', 'Habits'],
   ['tools.html', 'Convert'],
-  ['type.html', 'Type']
+  ['type.html', 'Type'],
+  ['insights.html', 'Insights']
 ];
 const ICON = {
   sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg>',
@@ -1260,16 +1285,70 @@ function initSettings() {
   }
   renderPreview();
 
+  // accent picker
+  const accentRow = $('#accentRow');
+  if (accentRow) {
+    const cur = store.get('accent', 'ripple');
+    accentRow.innerHTML = ACCENTS.map(([id, label]) =>
+      `<button class="accent-dot ${id === cur ? 'sel' : ''}" data-accent="${id}" title="${label}" aria-label="${label}"><i></i></button>`).join('');
+    accentRow.addEventListener('click', e => {
+      const b = e.target.closest('.accent-dot'); if (!b) return;
+      $$('.accent-dot', accentRow).forEach(x => x.classList.remove('sel'));
+      b.classList.add('sel'); applyAccent(b.dataset.accent); sfx('toggle');
+    });
+  }
+
+  // sync
+  const syncKeyIn = $('#syncKeyIn'), syncStatus = $('#syncStatus');
+  function renderSync() {
+    const key = syncKey();
+    syncKeyIn.value = key;
+    const last = store.get('sync:last', null);
+    syncStatus.innerHTML = key
+      ? `<span class="faint">Last synced:</span> <b>${last ? new Date(last).toLocaleString() : 'never'}</b>`
+      : `<span class="faint">No sync code yet. Create one, then paste it on your other devices.</span>`;
+  }
+  renderSync();
+  $('#syncMake').addEventListener('click', async () => {
+    if (syncKey() && !(await confirmModal('Replace sync code', 'Your current code will be forgotten on this device. Data already in the cloud under the old code stays there.', true))) return;
+    store.set('sync:key', makeSyncKey()); store.del('sync:last'); renderSync(); toast('Sync code created'); sfx('complete');
+  });
+  $('#syncSave').addEventListener('click', () => {
+    const v = (syncKeyIn.value || '').trim().toLowerCase();
+    if (!/^[a-z0-9]{24,64}$/.test(v)) { toast('That code doesn’t look right'); sfx('error'); return; }
+    store.set('sync:key', v); store.del('sync:last'); renderSync(); toast('Sync code saved'); sfx('toggle');
+  });
+  $('#syncCopy').addEventListener('click', async () => {
+    if (!syncKey()) { toast('Create a code first'); return; }
+    try { await navigator.clipboard.writeText(syncKey()); toast('Code copied'); }
+    catch { syncKeyIn.select(); toast('Press Ctrl+C to copy'); }
+  });
+  $('#syncPush').addEventListener('click', async e => {
+    if (!syncKey()) { toast('Create a sync code first'); sfx('error'); return; }
+    const b = e.currentTarget; b.disabled = true; const t = b.textContent; b.textContent = 'Uploading…';
+    try { await syncPush(); toast('Uploaded to your cloud ☁️'); sfx('complete'); renderSync(); }
+    catch { toast('Upload failed — is the backend deployed?'); sfx('error'); }
+    finally { b.disabled = false; b.textContent = t; }
+  });
+  $('#syncPull').addEventListener('click', async e => {
+    if (!syncKey()) { toast('Create a sync code first'); sfx('error'); return; }
+    const b = e.currentTarget; b.disabled = true; const t = b.textContent; b.textContent = 'Fetching…';
+    try {
+      const { data, updated } = await syncPull();
+      if (!data) { toast('Nothing in the cloud for this code yet'); return; }
+      const go = await confirmModal('Download and replace',
+        `This replaces everything in this browser with the cloud copy from ${updated ? new Date(updated).toLocaleString() : 'earlier'}.`, true);
+      if (!go) return;
+      restoreData(data); store.set('sync:last', updated || new Date().toISOString());
+      toast('Synced — reloading…'); sfx('complete');
+      setTimeout(() => location.reload(), 900);
+    } catch { toast('Download failed — is the backend deployed?'); sfx('error'); }
+    finally { b.disabled = false; b.textContent = t; }
+  });
+
   // backup: export / import
   const backupInfo = $('#backupInfo');
-  function allData() {
-    const out = {};
-    Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => {
-      if (k === NS + 'adminpw' || k === NS + 'admin') return; // never export admin creds
-      out[k.slice(NS.length)] = localStorage.getItem(k);
-    });
-    return out;
-  }
+  const allData = collectData;
   function renderBackupInfo() {
     const d = allData();
     const notes = (store.get('notes', []) || []).length;
@@ -1308,9 +1387,7 @@ function initSettings() {
       `This replaces what’s in this browser with the backup from ${when} (${count} items). Your current data here will be overwritten.`, true);
     fileIn.value = '';
     if (!go) return;
-    Object.keys(localStorage).filter(k => k.startsWith(NS) && k !== NS + 'admin' && k !== NS + 'adminpw')
-      .forEach(k => localStorage.removeItem(k));
-    Object.entries(payload.data).forEach(([k, v]) => { try { localStorage.setItem(NS + k, v); } catch {} });
+    restoreData(payload.data);
     toast('Backup restored — reloading…'); sfx('complete');
     setTimeout(() => location.reload(), 900);
   });
@@ -1697,6 +1774,144 @@ function initChangelog() {
 }
 
 /* ============================================================
+   ACCENTS
+   ============================================================ */
+const ACCENTS = [
+  ['ripple', 'Ripple'],
+  ['sunset', 'Sunset'],
+  ['forest', 'Forest'],
+  ['candy', 'Candy'],
+  ['mono', 'Mono']
+];
+function applyAccent(name) {
+  if (name === 'ripple') delete document.documentElement.dataset.accent;
+  else document.documentElement.dataset.accent = name;
+  store.set('accent', name);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const c = getComputedStyle(document.documentElement).getPropertyValue('--violet').trim();
+    if (c) meta.setAttribute('content', c);
+  }
+}
+
+/* ============================================================
+   SYNC — optional, across devices via the backend
+   ============================================================ */
+const SYNC_API = '/.netlify/functions/sync';
+const syncKey = () => store.get('sync:key', '');
+function makeSyncKey() {
+  const a = new Uint8Array(20);
+  (crypto || window.crypto).getRandomValues(a);
+  return [...a].map(b => b.toString(36).padStart(2, '0')).join('').slice(0, 32).toLowerCase();
+}
+async function syncPush() {
+  const key = syncKey(); if (!key) throw new Error('no key');
+  const r = await fetch(SYNC_API, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, data: collectData() })
+  });
+  if (!r.ok) throw new Error('push failed');
+  const j = await r.json();
+  store.set('sync:last', j.updated || new Date().toISOString());
+  return j.updated;
+}
+async function syncPull() {
+  const key = syncKey(); if (!key) throw new Error('no key');
+  const r = await fetch(`${SYNC_API}?key=${encodeURIComponent(key)}`, { cache: 'no-store' });
+  if (!r.ok) throw new Error('pull failed');
+  const j = await r.json();
+  return j; // { data, updated }
+}
+
+/* ============================================================
+   INSIGHTS
+   ============================================================ */
+function initInsights() {
+  const lastDays = n => [...Array(n)].map((_, i) => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (n - 1 - i)); return d;
+  });
+  const k = d => d.toISOString().slice(0, 10);
+  const DAY = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  const days = lastDays(7);
+  const habits = store.get('habits', []) || [];
+  const tasks = store.get('tasks', []) || [];
+  const diary = store.get('diary', {}) || {};
+
+  const focus = days.map(d => store.get('focus:' + k(d), 0) || 0);
+  const water = days.map(d => store.get('water:' + k(d), 0) || 0);
+  const habitPct = days.map(d => {
+    const done = (store.get('habits:done:' + k(d), []) || []).length;
+    return habits.length ? Math.round((done / habits.length) * 100) : 0;
+  });
+
+  const sum = a => a.reduce((x, y) => x + y, 0);
+  const avg = a => a.length ? sum(a) / a.length : 0;
+
+  function bars(vals, unit, colorClass) {
+    const max = Math.max(1, ...vals);
+    return `<div class="chart">${vals.map((v, i) => `
+      <div class="bar-col">
+        <div class="bar-track"><div class="bar ${colorClass}" style="height:${(v / max) * 100}%"
+             title="${escapeHtml(formatDate(days[i]))} — ${v}${unit}"></div></div>
+        <span class="bar-lbl">${DAY[days[i].getDay()]}</span>
+        <span class="bar-val">${v}</span>
+      </div>`).join('')}</div>`;
+  }
+
+  // headline numbers
+  const pending = tasks.filter(t => !t.done).length;
+  const doneTasks = tasks.filter(t => t.done).length;
+  const best = store.get('type:best', 0);
+  const entries = Object.keys(diary).length;
+  const moods = {};
+  Object.values(diary).forEach(e => { if (e && e.mood) moods[e.mood] = (moods[e.mood] || 0) + 1; });
+  const topMoods = Object.entries(moods).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  // longest habit streak across all habits
+  let bestStreak = 0;
+  habits.forEach(h => {
+    let s = 0;
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const done = store.get('habits:done:' + d.toISOString().slice(0, 10), []) || [];
+      if (done.includes(h.id)) s++; else if (i === 0) continue; else break;
+    }
+    bestStreak = Math.max(bestStreak, s);
+  });
+
+  $('#insHead').innerHTML = `
+    <div class="stat s1"><div class="num">${sum(focus)}</div><div class="lbl">Focus rounds this week</div></div>
+    <div class="stat s2"><div class="num">${Math.round(avg(habitPct))}%</div><div class="lbl">Avg habits done</div></div>
+    <div class="stat s3"><div class="num">${bestStreak}</div><div class="lbl">Longest streak</div></div>
+    <div class="stat s4"><div class="num">${avg(water).toFixed(1)}</div><div class="lbl">Avg glasses/day</div></div>`;
+
+  $('#insFocus').innerHTML = bars(focus, ' rounds', 'b-violet');
+  $('#insHabits').innerHTML = bars(habitPct, '%', 'b-teal');
+  $('#insWater').innerHTML = bars(water, ' glasses', 'b-aqua');
+
+  const totalTasks = tasks.length || 1;
+  $('#insTasks').innerHTML = `
+    <div class="ring-wrap">
+      <div class="ring" style="--p:${Math.round((doneTasks / totalTasks) * 100)}"><span>${Math.round((doneTasks / totalTasks) * 100)}%</span></div>
+      <div class="ring-legend">
+        <div><b>${doneTasks}</b> done</div>
+        <div><b>${pending}</b> still open</div>
+      </div>
+    </div>`;
+
+  $('#insMisc').innerHTML = `
+    <div class="misc-row"><span>Diary entries</span><b>${entries}</b></div>
+    <div class="misc-row"><span>Best typing speed</span><b>${best} WPM</b></div>
+    <div class="misc-row"><span>Habits tracked</span><b>${habits.length}</b></div>
+    ${topMoods.length ? `<div class="misc-row"><span>Most felt</span><b class="mood-list">${topMoods.map(([m, n]) => `${m}<i>${n}</i>`).join('')}</b></div>` : ''}`;
+
+  if (!habits.length && !tasks.length && !sum(focus)) {
+    $('#insEmpty').hidden = false;
+  }
+}
+
+/* ============================================================
    Boot
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -1716,7 +1931,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const routes = {
     home: initHome, tasks: initTasks, focus: initFocus,
     notes: initNotes, habits: initHabits, tools: initTools,
-    settings: initSettings, type: initType, changelog: initChangelog
+    settings: initSettings, type: initType, changelog: initChangelog,
+    insights: initInsights
   };
   const page = document.body.dataset.page;
   if (routes[page]) routes[page]();
