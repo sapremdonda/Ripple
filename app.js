@@ -1368,20 +1368,37 @@ const Cursor = (() => {
   const ROOTS = ['.nav', '.shell', '.site-footer'];
 
   let mode = 'ring', built = false, lensBuilt = false;
-  let dot, ring, lens, inner, glare;
+  let dot, ring, lens, inner, glare, brushEl;
+  let brush = null;
   let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
   let cloneMap = [];          // [{orig, clone}] so we can re-pin + sync values
   let mo = null, recloneT = null, syncT = null;
+
+  const hexA = (hex, a) => {
+    const h = String(hex || '').replace('#', '');
+    const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+    const n = parseInt(full, 16);
+    if (isNaN(n)) return `rgba(255,255,255,${a})`;
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  };
 
   /* ---- base cursor ---- */
   function build() {
     dot = document.createElement('div'); dot.className = 'cursor-dot';
     ring = document.createElement('div'); ring.className = 'cursor-ring';
-    document.body.append(dot, ring);
+    brushEl = document.createElement('div'); brushEl.className = 'cursor-brush';
+    brushEl.innerHTML = '<i class="cb-ring"></i><i class="cb-cross"></i>';
+    document.body.append(dot, ring, brushEl);
 
-    window.addEventListener('mousemove', e => {
+    // pointermove, NOT mousemove: calling preventDefault() on pointerdown
+    // (which the sketch canvas must do) suppresses the compatibility mouse
+    // events, so a mousemove listener goes silent mid-drag and the cursor
+    // freezes. pointermove keeps firing, and survives pointer capture.
+    window.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') return;
       mx = e.clientX; my = e.clientY;
       dot.style.transform = `translate(${mx}px, ${my}px)`;
+      if (brush) brushEl.style.transform = `translate(${mx}px, ${my}px)`;
       if (reduce) ring.style.transform = `translate(${mx}px, ${my}px)`;
       if (mode === 'lens' && lens) placeLens();
     }, { passive: true });
@@ -1396,6 +1413,32 @@ const Cursor = (() => {
       requestAnimationFrame(loop);
     })();
     built = true;
+  }
+
+  /* ---- brush cursor (sketch pad) ----
+     Shows exactly what you're about to draw: a ring the true diameter of the
+     brush in the current colour, or a crosshair for the shape tools. */
+  function setBrush(cfg) {
+    if (mode === 'off' || !fine) { brush = null; document.body.classList.remove('cursor-brush-on'); return; }
+    brush = cfg;
+    document.body.classList.toggle('cursor-brush-on', !!cfg);
+    if (!cfg || !built) return;
+    const shape = !['pen', 'eraser'].includes(cfg.tool);
+    brushEl.classList.toggle('shape', shape);
+    const d = Math.max(8, (cfg.size || 4) * (cfg.scale || 1));
+    const r = brushEl.querySelector('.cb-ring');
+    r.style.width = d + 'px'; r.style.height = d + 'px';
+    if (cfg.tool === 'eraser') {
+      r.style.borderColor = 'rgba(255,255,255,.85)';
+      r.style.background = 'rgba(255,255,255,.08)';
+      r.style.borderStyle = 'dashed';
+    } else {
+      r.style.borderColor = cfg.color;
+      r.style.background = hexA(cfg.color, .22);
+      r.style.borderStyle = 'solid';
+    }
+    brushEl.style.color = cfg.tool === 'eraser' ? '#fff' : cfg.color;
+    brushEl.style.transform = `translate(${mx}px, ${my}px)`;
   }
 
   /* ---- magnifier ---- */
@@ -1497,10 +1540,11 @@ const Cursor = (() => {
     document.body.classList.toggle('cursor-lens-on', mode === 'lens');
     if (on && !built) build();
     if (built) { dot.style.display = on ? 'block' : 'none'; ring.style.display = (mode === 'ring') ? 'block' : 'none'; }
+    if (!on) setBrush(null);
     if (mode === 'lens') { if (!lensBuilt) buildLens(); else { reclone(); lens.style.display = 'block'; } }
     else teardownLens();
   }
-  return { set, refresh: () => { if (mode === 'lens' && lensBuilt) reclone(); } };
+  return { set, setBrush, refresh: () => { if (mode === 'lens' && lensBuilt) reclone(); } };
 })();
 
 /* ============================================================
@@ -2435,6 +2479,19 @@ function initSketch() {
     renderList();
   }
 
+  /* ---- brush cursor: mirrors the real brush over the canvas ---- */
+  let overCanvas = false;
+  function pushBrush() {
+    if (!overCanvas) return;
+    const r = cv.getBoundingClientRect();
+    Cursor.setBrush({ size, color, tool, scale: r.width / SK_W });
+  }
+  cv.addEventListener('pointerenter', e => {
+    if (e.pointerType === 'touch') return;
+    overCanvas = true; pushBrush();
+  });
+  cv.addEventListener('pointerleave', () => { overCanvas = false; Cursor.setBrush(null); });
+
   /* ---- pointer input ---- */
   const toLogical = e => {
     const r = cv.getBoundingClientRect();
@@ -2485,6 +2542,7 @@ function initSketch() {
     tool = b.dataset.tool; store.set('sk:tool', tool);
     $$('.sk-tool').forEach(x => x.classList.toggle('sel', x.dataset.tool === tool));
     $('#skFillWrap').hidden = !['rect', 'ellipse'].includes(tool);
+    pushBrush();
     sfx('tap');
   });
   $('#skFillWrap').hidden = !['rect', 'ellipse'].includes(tool);
@@ -2495,6 +2553,7 @@ function initSketch() {
     color = c; store.set('sk:color', c);
     $$('.sk-sw').forEach(x => x.classList.toggle('sel', x.dataset.c === c));
     $('#skColor').value = c;
+    pushBrush();
   }
   $('#skSwatches').addEventListener('click', e => {
     const b = e.target.closest('.sk-sw'); if (!b) return;
@@ -2506,7 +2565,7 @@ function initSketch() {
   const sizeIn = $('#skSize');
   sizeIn.value = size;
   $('#skSizeVal').textContent = size;
-  sizeIn.addEventListener('input', () => { size = +sizeIn.value; store.set('sk:size', size); $('#skSizeVal').textContent = size; });
+  sizeIn.addEventListener('input', () => { size = +sizeIn.value; store.set('sk:size', size); $('#skSizeVal').textContent = size; pushBrush(); });
 
   $('#skFill').addEventListener('click', e => {
     fill = !fill;
