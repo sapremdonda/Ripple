@@ -118,6 +118,21 @@
         </div>
       </section>
 
+      <!-- Backup -->
+      <section class="card set-card">
+        <div class="set-head">
+          <span class="set-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg></span>
+          <h3>Backup</h3>
+        </div>
+        <p class="set-sub" style="margin-bottom:14px">Your data lives only in this browser. Export a file to keep it safe or move it to another device.</p>
+        <div class="set-actions">
+          <button class="btn ghost" id="exportData">Export backup</button>
+          <button class="btn ghost" id="importData">Import backup</button>
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </div>
+        <div class="fmt-preview" id="backupInfo" style="text-align:left"></div>
+      </section>
+
       <!-- Reading voice -->
       <section class="card set-card">
         <div class="set-head">

@@ -344,6 +344,87 @@ function initTasks() {
 }
 
 /* ============================================================
+   AMBIENT SOUNDS — generated with Web Audio (no files needed)
+   ============================================================ */
+const Ambient = (() => {
+  let ctx = null, master = null;
+  const layers = {};   // name -> { gain, nodes[], vol }
+  const DEFS = ['rain', 'waves', 'wind', 'cafe'];
+
+  function ac() {
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  // steady noise buffer, looped — cheap and seamless
+  function noiseSource(c) {
+    const len = 2 * c.sampleRate;
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const s = c.createBufferSource(); s.buffer = buf; s.loop = true;
+    return s;
+  }
+  // slow LFO to make a layer breathe instead of sitting flat
+  function lfo(c, target, rate, depth, base) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.frequency.value = rate; g.gain.value = depth;
+    target.value = base;
+    o.connect(g); g.connect(target); o.start();
+    return o;
+  }
+  function build(name) {
+    const c = ac();
+    const g = c.createGain(); g.gain.value = 0; g.connect(master);
+    const nodes = [];
+
+    if (name === 'rain') {
+      const src = noiseSource(c);
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500;
+      src.connect(hp); hp.connect(lp); lp.connect(g); src.start();
+      nodes.push(src, lfo(c, lp.frequency, 0.08, 900, 6000));
+    } else if (name === 'waves') {
+      const src = noiseSource(c);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
+      const swell = c.createGain(); swell.gain.value = 0.5;
+      src.connect(lp); lp.connect(swell); swell.connect(g); src.start();
+      // long swell = the push/pull of surf
+      nodes.push(src, lfo(c, swell.gain, 0.09, 0.42, 0.5), lfo(c, lp.frequency, 0.07, 260, 620));
+    } else if (name === 'wind') {
+      const src = noiseSource(c);
+      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500; bp.Q.value = 0.7;
+      src.connect(bp); bp.connect(g); src.start();
+      nodes.push(src, lfo(c, bp.frequency, 0.05, 260, 480));
+    } else if (name === 'cafe') {
+      const src = noiseSource(c);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 950;
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 180;
+      src.connect(hp); hp.connect(lp); lp.connect(g); src.start();
+      nodes.push(src, lfo(c, lp.frequency, 0.13, 300, 900));
+    }
+    layers[name] = { gain: g, nodes, vol: 0 };
+    return layers[name];
+  }
+  function set(name, vol) {
+    const L = layers[name] || (vol > 0 ? build(name) : null);
+    if (!L) return;
+    L.vol = vol;
+    const c = ac();
+    // scaled down: ambience should sit under everything else
+    L.gain.gain.setTargetAtTime(vol * 0.22, c.currentTime, 0.25);
+  }
+  function stopAll() {
+    Object.keys(layers).forEach(n => set(n, 0));
+  }
+  function active() { return Object.values(layers).some(l => l.vol > 0); }
+  return { DEFS, set, stopAll, active };
+})();
+
+/* ============================================================
    FOCUS — water-fill Pomodoro
    ============================================================ */
 function initFocus() {
@@ -446,6 +527,56 @@ function initFocus() {
   }
 
   setMode('work'); paint();
+
+  /* ---- ambience mixer ---- */
+  const MIX_META = {
+    rain:  { label: 'Rain',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14a4 4 0 0 1 .6-8 5 5 0 0 1 9.5 1.2A3.5 3.5 0 0 1 18 14"/><path d="M8 18l-1 2M12 18l-1 3M16 18l-1 2"/></svg>' },
+    waves: { label: 'Waves', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 13c2-2 4-2 6 0s4 2 6 0 4-2 6 0M2 18c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>' },
+    wind:  { label: 'Wind',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10a3 3 0 1 0-3-3M3 13h14a3 3 0 1 1-3 3M3 18h8"/></svg>' },
+    cafe:  { label: 'Café',  icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h12v5a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M16 10h2a2.5 2.5 0 0 1 0 5h-2M7 3v2M11 3v2"/></svg>' }
+  };
+  const mixGrid = $('#mixerGrid');
+  const saved = store.get('ambience', {});
+  mixGrid.innerHTML = Ambient.DEFS.map(n => `
+    <div class="mix-cell ${(saved[n] || 0) > 0 ? 'on' : ''}" data-n="${n}">
+      <span class="mix-ic">${MIX_META[n].icon}</span>
+      <span class="mix-label">${MIX_META[n].label}</span>
+      <input class="range mix-range" type="range" min="0" max="1" step="0.01" value="${saved[n] || 0}" aria-label="${MIX_META[n].label} volume">
+    </div>`).join('');
+
+  function applyMix(n, v, cell) {
+    Ambient.set(n, v);
+    cell.classList.toggle('on', v > 0);
+    const s = store.get('ambience', {}); s[n] = v; store.set('ambience', s);
+  }
+  mixGrid.addEventListener('input', e => {
+    const r = e.target.closest('.mix-range'); if (!r) return;
+    const cell = r.closest('.mix-cell');
+    applyMix(cell.dataset.n, parseFloat(r.value), cell);
+  });
+  // clicking the tile toggles between off and a comfortable level
+  mixGrid.addEventListener('click', e => {
+    if (e.target.closest('.mix-range')) return;
+    const cell = e.target.closest('.mix-cell'); if (!cell) return;
+    const r = $('.mix-range', cell);
+    const v = parseFloat(r.value) > 0 ? 0 : 0.5;
+    r.value = v; applyMix(cell.dataset.n, v, cell); sfx('tap');
+  });
+  $('#mixerStop').addEventListener('click', () => {
+    Ambient.stopAll();
+    $$('.mix-cell', mixGrid).forEach(c => { c.classList.remove('on'); $('.mix-range', c).value = 0; });
+    store.set('ambience', {}); sfx('tap');
+  });
+  // browsers block audio until a gesture, so restore saved levels on first interaction
+  if (Object.values(saved).some(v => v > 0)) {
+    const resume = () => {
+      Object.entries(saved).forEach(([n, v]) => { if (v > 0) Ambient.set(n, v); });
+      document.removeEventListener('pointerdown', resume);
+      document.removeEventListener('keydown', resume);
+    };
+    document.addEventListener('pointerdown', resume);
+    document.addEventListener('keydown', resume);
+  }
 }
 
 /* ============================================================
@@ -615,6 +746,7 @@ function initHabits() {
   function render() {
     if (!habits.length) {
       listEl.innerHTML = `<div class="empty"><div class="em-ic">🌱</div><p>No habits yet. Add one you want to do every day.</p></div>`;
+      renderHeat();
       return;
     }
     listEl.innerHTML = habits.map(h => {
@@ -627,6 +759,46 @@ function initHabits() {
         <button class="del" aria-label="Remove habit">${TRASH}</button>
       </li>`;
     }).join('');
+    renderHeat();
+  }
+
+  /* ---- heatmap: last 20 weeks ---- */
+  const heatGrid = $('#heatGrid');
+  const heatStats = $('#heatStats');
+  const DAYNAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  function renderHeat() {
+    if (!heatGrid) return;
+    const WEEKS = 20;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    // end on the Saturday of this week so columns are clean weeks
+    const end = new Date(today); end.setDate(end.getDate() + (6 - end.getDay()));
+    const start = new Date(end); start.setDate(start.getDate() - (WEEKS * 7 - 1));
+
+    const total = Math.max(1, habits.length);
+    let cells = '', activeDays = 0, totalDone = 0;
+    const months = [];
+    for (let w = 0; w < WEEKS; w++) {
+      let col = '';
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(start); day.setDate(start.getDate() + w * 7 + d);
+        const key = day.toISOString().slice(0, 10);
+        const future = day > today;
+        const done = future ? [] : (store.get('habits:done:' + key, []) || []);
+        const n = done.length;
+        if (n > 0) { activeDays++; totalDone += n; }
+        const ratio = n / total;
+        const lvl = future ? 'future' : n === 0 ? 'l0' : ratio <= 0.25 ? 'l1' : ratio <= 0.5 ? 'l2' : ratio <= 0.75 ? 'l3' : 'l4';
+        const label = `${DAYNAMES[day.getDay()]} ${formatDate(day)} — ${n} habit${n === 1 ? '' : 's'}`;
+        col += `<i class="heat-sq ${lvl}" title="${escapeHtml(label)}"></i>`;
+        if (d === 0) {
+          const m = day.toLocaleDateString(undefined, { month: 'short' });
+          months.push(months.length && months[months.length - 1].m === m ? { m: '', w } : { m, w });
+        }
+      }
+      cells += `<div class="heat-col">${col}</div>`;
+    }
+    heatGrid.innerHTML = cells;
+    heatStats.innerHTML = `<b>${activeDays}</b> active days · <b>${totalDone}</b> habits checked in the last ${WEEKS} weeks`;
   }
 
   function add() {
@@ -1087,6 +1259,61 @@ function initSettings() {
     $('#fmtPreview').innerHTML = `<b>${t.main}${t.ap ? ' ' + t.ap : ''}</b> · ${formatDate(d, true)}`;
   }
   renderPreview();
+
+  // backup: export / import
+  const backupInfo = $('#backupInfo');
+  function allData() {
+    const out = {};
+    Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => {
+      if (k === NS + 'adminpw' || k === NS + 'admin') return; // never export admin creds
+      out[k.slice(NS.length)] = localStorage.getItem(k);
+    });
+    return out;
+  }
+  function renderBackupInfo() {
+    const d = allData();
+    const notes = (store.get('notes', []) || []).length;
+    const tasks = (store.get('tasks', []) || []).length;
+    const habits = (store.get('habits', []) || []).length;
+    const diary = Object.keys(store.get('diary', {}) || {}).length;
+    backupInfo.innerHTML = `<span class="faint">In this browser:</span> <b>${tasks}</b> tasks · <b>${notes}</b> notes · <b>${diary}</b> diary entries · <b>${habits}</b> habits · <b>${Object.keys(d).length}</b> keys`;
+  }
+  renderBackupInfo();
+
+  $('#exportData').addEventListener('click', () => {
+    const payload = { app: 'ripple', version: 1, exported: new Date().toISOString(), data: allData() };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `ripple-backup-${todayKey()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast('Backup downloaded'); sfx('complete');
+  });
+
+  const fileIn = $('#importFile');
+  $('#importData').addEventListener('click', () => fileIn.click());
+  fileIn.addEventListener('change', async () => {
+    const file = fileIn.files && fileIn.files[0];
+    if (!file) return;
+    let payload;
+    try { payload = JSON.parse(await file.text()); }
+    catch { toast('That file isn’t valid JSON'); sfx('error'); fileIn.value = ''; return; }
+    if (!payload || payload.app !== 'ripple' || !payload.data || typeof payload.data !== 'object') {
+      toast('That doesn’t look like a Ripple backup'); sfx('error'); fileIn.value = ''; return;
+    }
+    const count = Object.keys(payload.data).length;
+    const when = payload.exported ? new Date(payload.exported).toLocaleString() : 'unknown date';
+    const go = await confirmModal('Import backup',
+      `This replaces what’s in this browser with the backup from ${when} (${count} items). Your current data here will be overwritten.`, true);
+    fileIn.value = '';
+    if (!go) return;
+    Object.keys(localStorage).filter(k => k.startsWith(NS) && k !== NS + 'admin' && k !== NS + 'adminpw')
+      .forEach(k => localStorage.removeItem(k));
+    Object.entries(payload.data).forEach(([k, v]) => { try { localStorage.setItem(NS + k, v); } catch {} });
+    toast('Backup restored — reloading…'); sfx('complete');
+    setTimeout(() => location.reload(), 900);
+  });
 
   // reading voice
   const voiceSel = $('#setVoice');
