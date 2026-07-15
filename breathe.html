@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Breathe · Ripple</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#8b5cf6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ripple">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="breathe">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head" style="text-align:center">
+      <span class="eyebrow" style="justify-content:center">Slow down</span>
+      <h1>Breathe</h1>
+      <p style="margin:0 auto">Follow the ripple. In as it grows, out as it settles. A few minutes is enough.</p>
+    </header>
+
+    <section class="breathe-wrap">
+      <div class="seg" id="breathePreset"></div>
+
+      <div class="breathe-stage">
+        <span class="breathe-ring r1"></span>
+        <span class="breathe-ring r2"></span>
+        <span class="breathe-ring r3"></span>
+        <div class="breathe-orb" id="bOrb"></div>
+        <div class="breathe-face">
+          <div class="breathe-phase" id="bPhase">Ready</div>
+          <div class="breathe-count" id="bCount">—</div>
+        </div>
+      </div>
+
+      <div class="breathe-meta"><span id="bCycles">0 this session</span> · <span id="bToday">0 today</span></div>
+      <button class="btn" id="bStart">Start</button>
+    </section>
+  </main>
+</body>
+</html>

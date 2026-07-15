@@ -10,8 +10,26 @@ const store = {
     try { const v = localStorage.getItem(NS + key); return v === null ? fallback : JSON.parse(v); }
     catch { return fallback; }
   },
-  set(key, val) { localStorage.setItem(NS + key, JSON.stringify(val)); },
-  del(key) { localStorage.removeItem(NS + key); }
+  set(key, val) {
+    try { localStorage.setItem(NS + key, JSON.stringify(val)); return true; }
+    catch (e) {
+      // Browsers cap localStorage (~5MB). Fail loudly rather than lose work silently.
+      const quota = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22 || e.code === 1014);
+      if (quota) {
+        if (!store._warned) { store._warned = true; setTimeout(() => { store._warned = false; }, 8000); }
+        try { toast('Storage is full — export a backup in Settings, then clear some sketches'); } catch {}
+      }
+      return false;
+    }
+  },
+  del(key) { localStorage.removeItem(NS + key); },
+  bytes() {
+    let n = 0;
+    Object.keys(localStorage).filter(k => k.startsWith(NS)).forEach(k => {
+      n += (k.length + (localStorage.getItem(k) || '').length) * 2; // UTF-16
+    });
+    return n;
+  }
 };
 const todayKey = () => new Date().toISOString().slice(0, 10);
 const $  = (s, r = document) => r.querySelector(s);
@@ -94,6 +112,7 @@ const PAGES = [
   ['index.html', 'Home'],
   ['tasks.html', 'Tasks'],
   ['focus.html', 'Focus'],
+  ['breathe.html', 'Breathe'],
   ['notes.html', 'Notes'],
   ['habits.html', 'Habits'],
   ['tools.html', 'Convert'],
@@ -407,13 +426,16 @@ function initTasks() {
       listEl.innerHTML = `<div class="empty"><div class="em-ic">🌊</div>
         <p>${filter === 'done' ? 'Nothing finished yet — the day is young.' : 'No tasks here. Add one above and let’s get moving.'}</p></div>`;
     } else {
-      listEl.innerHTML = shown.map(t => `
+      listEl.innerHTML = shown.map(t => {
+        const m = focusMinsFor(t.id);
+        return `
         <li class="task ${t.done ? 'done' : ''}" data-id="${t.id}">
           <span class="pri ${t.pri}"></span>
           <button class="check" aria-label="Toggle done">${CHECK}</button>
           <span class="task-text">${escapeHtml(t.text)}</span>
+          ${m ? `<span class="task-min" title="Focus time invested">◴ ${prettyMins(m)}</span>` : ''}
           <button class="del" aria-label="Delete task">${TRASH}</button>
-        </li>`).join('');
+        </li>`; }).join('');
     }
     const left = tasks.filter(t => !t.done).length;
     $('#taskCount').textContent = `${left} task${left === 1 ? '' : 's'} left`;
@@ -540,6 +562,22 @@ const Ambient = (() => {
 /* ============================================================
    FOCUS — water-fill Pomodoro
    ============================================================ */
+/* focus log: what your rounds were actually spent on */
+function focusLog() { return store.get('focus:log', []) || []; }
+function logFocus(taskId, text, min) {
+  const log = focusLog();
+  log.push({ d: todayKey(), id: taskId, text: text || '', min });
+  store.set('focus:log', log.slice(-1500));
+}
+function focusMinsFor(taskId) {
+  return focusLog().filter(e => e.id === taskId).reduce((a, b) => a + (b.min || 0), 0);
+}
+function prettyMins(m) {
+  if (!m) return '';
+  const h = Math.floor(m / 60), r = m % 60;
+  return h ? `${h}h ${r ? r + 'm' : ''}`.trim() : `${m}m`;
+}
+
 function initFocus() {
   const DUR = store.get('focus:dur', { work: 25, short: 5, long: 15 });
   let mode = 'work';
@@ -554,6 +592,29 @@ function initFocus() {
   const waterEl = $('#water');
   const startBtn = $('#startBtn');
   const stateNames = { work: 'Focus', short: 'Short break', long: 'Long break' };
+
+  /* ---- what are you focusing on? ---- */
+  const taskSel = $('#focusTask');
+  const taskHint = $('#focusTaskHint');
+  function fillTasks() {
+    if (!taskSel) return;
+    const open = (store.get('tasks', []) || []).filter(t => !t.done);
+    const cur = String(store.get('focus:task', '') || '');
+    taskSel.innerHTML = `<option value="">Nothing in particular</option>` +
+      open.map(t => `<option value="${t.id}">${escapeHtml(t.text)}</option>`).join('');
+    taskSel.value = open.some(t => String(t.id) === cur) ? cur : '';
+    renderHint();
+  }
+  function renderHint() {
+    if (!taskHint) return;
+    const id = taskSel.value ? Number(taskSel.value) : null;
+    const m = id ? focusMinsFor(id) : 0;
+    taskHint.textContent = m ? `${prettyMins(m)} invested so far` : '';
+  }
+  if (taskSel) {
+    fillTasks();
+    taskSel.addEventListener('change', () => { store.set('focus:task', taskSel.value); renderHint(); sfx('tap'); });
+  }
 
   // durations config
   ['work', 'short', 'long'].forEach(k => {
@@ -610,7 +671,11 @@ function initFocus() {
       round++; store.set('focus:round', round);
       const done = store.get('focus:' + todayKey(), 0) + 1;
       store.set('focus:' + todayKey(), done);
-      toast('Focus round done — nice work 🌊');
+      // credit the round to whatever you said you were working on
+      const tid = taskSel && taskSel.value ? Number(taskSel.value) : null;
+      const t = tid ? (store.get('tasks', []) || []).find(x => x.id === tid) : null;
+      logFocus(tid, t ? t.text : '', DUR.work);
+      toast(t ? `Round done — ${prettyMins(focusMinsFor(tid))} on “${t.text}” 🌊` : 'Focus round done — nice work 🌊');
       if (round >= 4) { round = 0; store.set('focus:round', 0); setMode('long', true); }
       else setMode('short', true);
     } else {
@@ -696,18 +761,22 @@ function initFocus() {
    NOTES
    ============================================================ */
 function initNotes() {
-  /* ---- mode toggle: notes | diary ---- */
+  /* ---- mode toggle: notes | diary | sketch ---- */
   let mode = store.get('notes:mode', 'notes');
-  const notesView = $('#notesView'), diaryView = $('#diaryView');
+  if (!['notes', 'diary', 'sketch'].includes(mode)) mode = 'notes';
+  const notesView = $('#notesView'), diaryView = $('#diaryView'), sketchView = $('#sketchView');
   const seg = $('#notesMode');
   function applyMode() {
     notesView.hidden = mode !== 'notes';
     diaryView.hidden = mode !== 'diary';
+    if (sketchView) sketchView.hidden = mode !== 'sketch';
     $$('button', seg).forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     store.set('notes:mode', mode);
+    Cursor.refresh();
   }
   $$('button', seg).forEach(b => b.addEventListener('click', () => { mode = b.dataset.mode; applyMode(); sfx('tap'); }));
   applyMode();
+  initSketch();
 
   /* ================= NOTES ================= */
   let notes = store.get('notes', []);
@@ -1395,6 +1464,15 @@ const Cursor = (() => {
         else if (b[i].tagName === 'TEXTAREA') b[i].textContent = a[i].value;
         else b[i].value = a[i].value;
       }
+      // cloneNode gives an empty canvas — copy the bitmap so the lens
+      // works over sketches too
+      const ca = orig.querySelectorAll('canvas'), cb = clone.querySelectorAll('canvas');
+      for (let i = 0; i < Math.min(ca.length, cb.length); i++) {
+        try {
+          cb[i].width = ca[i].width; cb[i].height = ca[i].height;
+          cb[i].getContext('2d').drawImage(ca[i], 0, 0);
+        } catch {}
+      }
     });
   }
 
@@ -1563,8 +1641,13 @@ function initSettings() {
     const notes = (store.get('notes', []) || []).length;
     const tasks = (store.get('tasks', []) || []).length;
     const habits = (store.get('habits', []) || []).length;
+    const sketches = (store.get('sketches', []) || []).length;
     const diary = Object.keys(store.get('diary', {}) || {}).length;
-    backupInfo.innerHTML = `<span class="faint">In this browser:</span> <b>${tasks}</b> tasks · <b>${notes}</b> notes · <b>${diary}</b> diary entries · <b>${habits}</b> habits · <b>${Object.keys(d).length}</b> keys`;
+    const kb = store.bytes() / 1024;
+    const pct = Math.min(100, (kb / 5120) * 100);   // browsers typically allow ~5MB
+    backupInfo.innerHTML = `<span class="faint">In this browser:</span> <b>${tasks}</b> tasks · <b>${notes}</b> notes · <b>${diary}</b> diary · <b>${sketches}</b> sketches · <b>${habits}</b> habits
+      <div class="use-track" title="${kb.toFixed(0)} KB of roughly 5 MB"><div class="use-bar ${pct > 80 ? 'hot' : ''}" style="width:${Math.max(2, pct)}%"></div></div>
+      <span class="faint">${kb < 1024 ? kb.toFixed(0) + ' KB' : (kb / 1024).toFixed(1) + ' MB'} used of about 5 MB${pct > 80 ? ' — time to export a backup' : ''}</span>`;
   }
   renderBackupInfo();
 
@@ -2113,11 +2196,400 @@ function initInsights() {
     <div class="misc-row"><span>Diary entries</span><b>${entries}</b></div>
     <div class="misc-row"><span>Best typing speed</span><b>${best} WPM</b></div>
     <div class="misc-row"><span>Habits tracked</span><b>${habits.length}</b></div>
+    <div class="misc-row"><span>Breathing cycles this week</span><b>${days.reduce((a, d) => a + (store.get('breathe:' + k(d), 0) || 0), 0)}</b></div>
+    <div class="misc-row"><span>Sketches</span><b>${(store.get('sketches', []) || []).length}</b></div>
     ${topMoods.length ? `<div class="misc-row"><span>Most felt</span><b class="mood-list">${topMoods.map(([m, n]) => `${m}<i>${n}</i>`).join('')}</b></div>` : ''}`;
+
+  /* where the focus actually went, last 7 days */
+  const since = k(days[0]);
+  const byTask = {};
+  focusLog().filter(e => e.d >= since).forEach(e => {
+    const label = e.text || 'Unassigned';
+    byTask[label] = (byTask[label] || 0) + (e.min || 0);
+  });
+  const ranked = Object.entries(byTask).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  const totalMin = ranked.reduce((a, b) => a + b[1], 0);
+  const spendEl = $('#insSpend');
+  if (spendEl) {
+    spendEl.innerHTML = ranked.length
+      ? `<div class="spend-total">${prettyMins(totalMin)} focused this week</div>` + ranked.map(([label, m]) => `
+        <div class="spend-row">
+          <div class="spend-top"><span>${escapeHtml(label)}</span><b>${prettyMins(m)}</b></div>
+          <div class="spend-track"><div class="spend-bar" style="width:${Math.round((m / ranked[0][1]) * 100)}%"></div></div>
+        </div>`).join('')
+      : `<div class="empty" style="padding:24px 10px"><p>Pick a task on the Focus page before a round, and your time will show up here.</p></div>`;
+  }
 
   if (!habits.length && !tasks.length && !sum(focus)) {
     $('#insEmpty').hidden = false;
   }
+}
+
+/* ============================================================
+   BREATHE — paced breathing as an expanding ripple
+   ============================================================ */
+const BREATHE_PRESETS = {
+  box:   { label: 'Box · 4-4-4-4', phases: [['Breathe in', 4], ['Hold', 4], ['Breathe out', 4], ['Hold', 4]] },
+  calm:  { label: 'Calm · 4-7-8',  phases: [['Breathe in', 4], ['Hold', 7], ['Breathe out', 8]] },
+  relax: { label: 'Relax · 4-6',   phases: [['Breathe in', 4], ['Breathe out', 6]] }
+};
+
+function initBreathe() {
+  const orb = $('#bOrb'), phaseEl = $('#bPhase'), countEl = $('#bCount');
+  const startBtn = $('#bStart'), cyclesEl = $('#bCycles'), todayEl = $('#bToday');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let preset = store.get('breathe:preset', 'box');
+  if (!BREATHE_PRESETS[preset]) preset = 'box';
+  let running = false, idx = 0, left = 0, cycles = 0, timer = null, scale = 0.45;
+
+  const phases = () => BREATHE_PRESETS[preset].phases;
+  const todayCount = () => store.get('breathe:' + todayKey(), 0) || 0;
+
+  function renderMeta() {
+    cyclesEl.textContent = `${cycles} this session`;
+    todayEl.textContent = `${todayCount()} today`;
+  }
+
+  function setPreset(p) {
+    preset = p; store.set('breathe:preset', p);
+    $$('#breathePreset button').forEach(b => b.classList.toggle('active', b.dataset.p === p));
+    if (!running) reset();
+  }
+
+  function reset() {
+    stop();
+    idx = 0; left = 0; scale = 0.45;
+    phaseEl.textContent = 'Ready'; countEl.textContent = '—';
+    orb.style.transitionDuration = '.6s';
+    orb.style.transform = 'scale(.45)';
+    document.body.classList.remove('breathing');
+  }
+
+  function startPhase() {
+    const [name, dur] = phases()[idx];
+    left = dur;
+    phaseEl.textContent = name;
+    countEl.textContent = left;
+    if (name === 'Breathe in') scale = 1;
+    else if (name === 'Breathe out') scale = 0.45;
+    if (!reduce) {
+      orb.style.transitionDuration = (name === 'Hold' ? 0.3 : dur) + 's';
+      orb.style.transform = `scale(${scale})`;
+    }
+    orb.classList.toggle('holding', name === 'Hold');
+    sfx(name === 'Breathe in' ? 'add' : name === 'Breathe out' ? 'delete' : 'tap');
+    timer = setInterval(() => {
+      left--;
+      countEl.textContent = Math.max(0, left);
+      if (left <= 0) { clearInterval(timer); timer = null; nextPhase(); }
+    }, 1000);
+  }
+
+  function nextPhase() {
+    idx++;
+    if (idx >= phases().length) {
+      idx = 0; cycles++;
+      store.set('breathe:' + todayKey(), todayCount() + 1);
+      renderMeta();
+      if (cycles % 5 === 0) { toast(`${cycles} cycles — nicely done`); sfx('complete'); }
+    }
+    if (running) startPhase();
+  }
+
+  function start() {
+    running = true; startBtn.textContent = 'Stop';
+    document.body.classList.add('breathing');
+    startPhase();
+  }
+  function stop() {
+    running = false; startBtn.textContent = 'Start';
+    clearInterval(timer); timer = null;
+    document.body.classList.remove('breathing');
+  }
+
+  $('#breathePreset').innerHTML = Object.entries(BREATHE_PRESETS)
+    .map(([id, p]) => `<button data-p="${id}" class="${id === preset ? 'active' : ''}">${p.label}</button>`).join('');
+  $('#breathePreset').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    setPreset(b.dataset.p); sfx('tap');
+  });
+  startBtn.addEventListener('click', () => running ? (stop(), reset()) : start());
+
+  renderMeta(); reset();
+}
+
+/* ============================================================
+   SKETCH — a small vector paint pad.
+
+   Strokes are stored as geometry, not pixels: a PNG data-URL of this
+   canvas is ~200KB, while the strokes behind it are ~2KB. That keeps
+   localStorage alive, stays crisp at any size, and syncs cheaply.
+   All coordinates live in a fixed 1000x700 space so a sketch drawn on
+   a phone lands identically on a desktop.
+   ============================================================ */
+const SK_W = 1000, SK_H = 700, SK_HIDPI = 2;
+const SK_TOOLS = [
+  ['pen', 'Pen', '<path d="M3 21l3.5-1 11-11-2.5-2.5-11 11z"/><path d="M15 5.5 18.5 9"/>'],
+  ['line', 'Line', '<path d="M4 20 20 4"/>'],
+  ['rect', 'Rectangle', '<rect x="4" y="6" width="16" height="12" rx="1.5"/>'],
+  ['ellipse', 'Ellipse', '<ellipse cx="12" cy="12" rx="8" ry="6"/>'],
+  ['arrow', 'Arrow', '<path d="M4 20 20 4"/><path d="M13 4h7v7"/>'],
+  ['eraser', 'Eraser', '<path d="M6 18h12"/><path d="M8.5 15.5 4 11l7-7 5 5-6.5 6.5z"/>']
+];
+const SK_SWATCHES = ['#ffffff', '#0f172a', '#22d3ee', '#2dd4bf', '#3b82f6', '#8b5cf6', '#fb7185', '#ef4444', '#f59e0b', '#22c55e'];
+
+function initSketch() {
+  const cv = $('#skCanvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = SK_W * SK_HIDPI; cv.height = SK_H * SK_HIDPI;
+
+  let sketches = store.get('sketches', []) || [];
+  let activeId = sketches[0]?.id ?? null;
+  let strokes = [], hist = [], hi = -1;
+  let tool = store.get('sk:tool', 'pen');
+  let color = store.get('sk:color', '#22d3ee');
+  let size = store.get('sk:size', 4);
+  let fill = false;
+  let drawing = false, cur = null;
+
+  const active = () => sketches.find(s => s.id === activeId);
+  const paper = () => (active()?.paper === 'light' ? '#ffffff' : '#0f1626');
+  const saveAll = () => store.set('sketches', sketches);
+  const rnd = n => Math.round(n);
+
+  /* ---- drawing ---- */
+  function drawStroke(c, s) {
+    c.save();
+    c.lineWidth = s.size;
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    // the eraser simply paints the paper back in — no compositing needed,
+    // and it stays correct if the paper colour is changed later
+    const col = s.type === 'eraser' ? paper() : s.color;
+    c.strokeStyle = col; c.fillStyle = col;
+
+    if (s.type === 'pen' || s.type === 'eraser') {
+      const p = s.pts;
+      if (!p || !p.length) { c.restore(); return; }
+      if (p.length === 1) { c.beginPath(); c.arc(p[0][0], p[0][1], s.size / 2, 0, 7); c.fill(); c.restore(); return; }
+      c.beginPath(); c.moveTo(p[0][0], p[0][1]);
+      for (let i = 1; i < p.length - 1; i++) {
+        const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+        c.quadraticCurveTo(p[i][0], p[i][1], mx, my);   // smooths the hand-drawn line
+      }
+      c.lineTo(p[p.length - 1][0], p[p.length - 1][1]);
+      c.stroke(); c.restore(); return;
+    }
+
+    const [x1, y1] = s.from, [x2, y2] = s.to;
+    if (s.type === 'line') { c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+    else if (s.type === 'rect') {
+      const x = Math.min(x1, x2), y = Math.min(y1, y2), w = Math.abs(x2 - x1), h = Math.abs(y2 - y1);
+      c.beginPath(); c.roundRect ? c.roundRect(x, y, w, h, 2) : c.rect(x, y, w, h);
+      s.fill ? c.fill() : c.stroke();
+    } else if (s.type === 'ellipse') {
+      const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+      c.beginPath(); c.ellipse(cx, cy, Math.abs(x2 - x1) / 2, Math.abs(y2 - y1) / 2, 0, 0, Math.PI * 2);
+      s.fill ? c.fill() : c.stroke();
+    } else if (s.type === 'arrow') {
+      const a = Math.atan2(y2 - y1, x2 - x1), L = Math.max(12, s.size * 3.5);
+      c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+      c.beginPath(); c.moveTo(x2, y2);
+      c.lineTo(x2 - L * Math.cos(a - 0.42), y2 - L * Math.sin(a - 0.42));
+      c.lineTo(x2 - L * Math.cos(a + 0.42), y2 - L * Math.sin(a + 0.42));
+      c.closePath(); c.fill();
+    }
+    c.restore();
+  }
+
+  function redraw(preview) {
+    ctx.setTransform(SK_HIDPI, 0, 0, SK_HIDPI, 0, 0);
+    ctx.clearRect(0, 0, SK_W, SK_H);
+    ctx.fillStyle = paper(); ctx.fillRect(0, 0, SK_W, SK_H);
+    strokes.forEach(s => drawStroke(ctx, s));
+    if (preview) drawStroke(ctx, preview);
+  }
+
+  /* ---- history (snapshots, capped) ---- */
+  function pushHist() {
+    hist = hist.slice(0, hi + 1);
+    hist.push(JSON.stringify(strokes));
+    if (hist.length > 25) hist.shift();
+    hi = hist.length - 1;
+    renderUndo();
+  }
+  function renderUndo() {
+    $('#skUndo').disabled = hi <= 0;
+    $('#skRedo').disabled = hi >= hist.length - 1;
+  }
+  function applyHist() {
+    strokes = JSON.parse(hist[hi]);
+    redraw(); persist(); renderUndo();
+  }
+
+  function persist() {
+    const s = active(); if (!s) return;
+    s.strokes = strokes; s.updated = Date.now();
+    if (saveAll()) $('#skStamp').textContent = 'Saved ' + new Date(s.updated).toLocaleTimeString();
+    renderList();
+  }
+
+  /* ---- pointer input ---- */
+  const toLogical = e => {
+    const r = cv.getBoundingClientRect();
+    return [
+      rnd((e.clientX - r.left) / r.width * SK_W),
+      rnd((e.clientY - r.top) / r.height * SK_H)
+    ];
+  };
+  cv.addEventListener('pointerdown', e => {
+    if (!active()) return;
+    e.preventDefault();
+    cv.setPointerCapture(e.pointerId);
+    drawing = true;
+    const p = toLogical(e);
+    cur = (tool === 'pen' || tool === 'eraser')
+      ? { type: tool, color, size, pts: [p] }
+      : { type: tool, color, size, fill, from: p, to: p };
+    redraw(cur);
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    const p = toLogical(e);
+    if (cur.type === 'pen' || cur.type === 'eraser') {
+      const last = cur.pts[cur.pts.length - 1];
+      if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 2.5) return;  // thin out the points
+      cur.pts.push(p);
+    } else cur.to = p;
+    redraw(cur);
+  });
+  const endDraw = () => {
+    if (!drawing) return;
+    drawing = false;
+    const moved = cur.pts ? true : (cur.from[0] !== cur.to[0] || cur.from[1] !== cur.to[1]);
+    if (moved) { strokes.push(cur); pushHist(); persist(); }
+    cur = null; redraw();
+  };
+  cv.addEventListener('pointerup', endDraw);
+  cv.addEventListener('pointercancel', endDraw);
+  cv.addEventListener('pointerleave', endDraw);
+
+  /* ---- toolbar ---- */
+  $('#skTools').innerHTML = SK_TOOLS.map(([id, label, path]) =>
+    `<button class="sk-tool ${id === tool ? 'sel' : ''}" data-tool="${id}" title="${label}" aria-label="${label}">
+       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${path}</svg>
+     </button>`).join('');
+  $('#skTools').addEventListener('click', e => {
+    const b = e.target.closest('.sk-tool'); if (!b) return;
+    tool = b.dataset.tool; store.set('sk:tool', tool);
+    $$('.sk-tool').forEach(x => x.classList.toggle('sel', x.dataset.tool === tool));
+    $('#skFillWrap').hidden = !['rect', 'ellipse'].includes(tool);
+    sfx('tap');
+  });
+  $('#skFillWrap').hidden = !['rect', 'ellipse'].includes(tool);
+
+  $('#skSwatches').innerHTML = SK_SWATCHES.map(c =>
+    `<button class="sk-sw ${c === color ? 'sel' : ''}" data-c="${c}" style="background:${c}" aria-label="Colour ${c}"></button>`).join('');
+  function setColor(c) {
+    color = c; store.set('sk:color', c);
+    $$('.sk-sw').forEach(x => x.classList.toggle('sel', x.dataset.c === c));
+    $('#skColor').value = c;
+  }
+  $('#skSwatches').addEventListener('click', e => {
+    const b = e.target.closest('.sk-sw'); if (!b) return;
+    setColor(b.dataset.c); sfx('tap');
+  });
+  $('#skColor').value = color;
+  $('#skColor').addEventListener('input', e => setColor(e.target.value));
+
+  const sizeIn = $('#skSize');
+  sizeIn.value = size;
+  $('#skSizeVal').textContent = size;
+  sizeIn.addEventListener('input', () => { size = +sizeIn.value; store.set('sk:size', size); $('#skSizeVal').textContent = size; });
+
+  $('#skFill').addEventListener('click', e => {
+    fill = !fill;
+    e.currentTarget.classList.toggle('sel', fill);
+    e.currentTarget.setAttribute('aria-pressed', fill);
+    sfx('tap');
+  });
+  $('#skUndo').addEventListener('click', () => { if (hi > 0) { hi--; applyHist(); sfx('tap'); } });
+  $('#skRedo').addEventListener('click', () => { if (hi < hist.length - 1) { hi++; applyHist(); sfx('tap'); } });
+  $('#skClear').addEventListener('click', async () => {
+    if (!strokes.length) return;
+    if (!(await confirmModal('Clear sketch', 'Everything on this canvas will be wiped. You can still undo right after.', true))) return;
+    strokes = []; pushHist(); redraw(); persist(); sfx('delete');
+  });
+  $('#skPaper').addEventListener('click', () => {
+    const s = active(); if (!s) return;
+    s.paper = s.paper === 'light' ? 'dark' : 'light';
+    saveAll(); redraw(); renderPaperBtn(); sfx('toggle');
+  });
+  function renderPaperBtn() {
+    const light = active()?.paper === 'light';
+    $('#skPaper').textContent = light ? 'Light paper' : 'Dark paper';
+  }
+  $('#skPng').addEventListener('click', () => {
+    const s = active(); if (!s) return;
+    const a = document.createElement('a');
+    a.download = (s.title || 'sketch').replace(/[^\w-]+/g, '-').toLowerCase() + '.png';
+    a.href = cv.toDataURL('image/png');
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('PNG downloaded'); sfx('complete');
+  });
+
+  /* ---- sketch list ---- */
+  const listEl = $('#skList'), titleIn = $('#skTitle');
+  function renderList() {
+    if (!sketches.length) {
+      listEl.innerHTML = `<div class="empty" style="padding:24px 10px"><p>No sketches yet. Tap “New sketch”.</p></div>`;
+      $('#skEditor').style.display = 'none';
+      return;
+    }
+    $('#skEditor').style.display = 'flex';
+    listEl.innerHTML = sketches.map(s => `
+      <div class="note-item ${s.id === activeId ? 'active' : ''}" data-id="${s.id}">
+        <h4>${escapeHtml(s.title || 'Untitled sketch')}</h4>
+        <p>${(s.strokes || []).length} strokes</p>
+      </div>`).join('');
+  }
+  function load() {
+    const s = active(); if (!s) return;
+    titleIn.value = s.title || '';
+    strokes = (s.strokes || []).slice();
+    hist = [JSON.stringify(strokes)]; hi = 0;
+    renderPaperBtn(); renderUndo(); redraw();
+    $('#skStamp').textContent = s.updated ? 'Edited ' + new Date(s.updated).toLocaleString() : 'Not saved yet';
+  }
+  function newSketch() {
+    const s = {
+      id: Date.now(), title: '', strokes: [], updated: Date.now(),
+      paper: document.documentElement.classList.contains('light') ? 'light' : 'dark'
+    };
+    sketches.unshift(s); activeId = s.id; saveAll(); renderList(); load(); titleIn.focus();
+  }
+  listEl.addEventListener('click', e => {
+    const it = e.target.closest('.note-item'); if (!it) return;
+    activeId = Number(it.dataset.id); renderList(); load();
+  });
+  let tdeb;
+  titleIn.addEventListener('input', () => {
+    clearTimeout(tdeb);
+    tdeb = setTimeout(() => { const s = active(); if (s) { s.title = titleIn.value; saveAll(); renderList(); } }, 350);
+  });
+  $('#skNew').addEventListener('click', () => { newSketch(); sfx('add'); });
+  $('#skDel').addEventListener('click', async () => {
+    if (!active()) return;
+    if (!(await confirmModal('Delete sketch', 'This sketch will be removed for good.', true))) return;
+    sketches = sketches.filter(s => s.id !== activeId);
+    activeId = sketches[0]?.id ?? null;
+    saveAll(); renderList();
+    if (activeId) load(); else newSketch();
+    sfx('delete');
+  });
+
+  if (!sketches.length) newSketch(); else { renderList(); load(); }
 }
 
 /* ============================================================
@@ -2141,7 +2613,7 @@ document.addEventListener('DOMContentLoaded', () => {
     home: initHome, tasks: initTasks, focus: initFocus,
     notes: initNotes, habits: initHabits, tools: initTools,
     settings: initSettings, type: initType, changelog: initChangelog,
-    insights: initInsights
+    insights: initInsights, breathe: initBreathe
   };
   const page = document.body.dataset.page;
   if (routes[page]) routes[page]();

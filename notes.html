@@ -37,6 +37,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v18H6a2 2 0 0 1-2-2z"/><path d="M9 3v18"/></svg>
         Diary
       </button>
+      <button data-mode="sketch">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l3.5-1 11-11-2.5-2.5-11 11z"/><path d="M15 5.5 18.5 9"/><path d="M14 3h7v7"/></svg>
+        Sketch
+      </button>
     </div>
 
     <!-- NOTES -->
@@ -68,6 +72,53 @@
         <div class="note-meta">
           <span class="stamp" id="diaryStamp">Not saved yet</span>
           <button class="link-btn" id="diaryDel">Delete entry</button>
+        </div>
+      </section>
+    </section>
+    <!-- SKETCH -->
+    <section class="notes-layout" id="sketchView" hidden>
+      <aside class="card" style="padding:14px">
+        <button class="btn" id="skNew" style="width:100%;justify-content:center;margin-bottom:12px">+ New sketch</button>
+        <div class="notes-list" id="skList"></div>
+      </aside>
+
+      <section class="card note-editor" id="skEditor">
+        <input class="field title-in" id="skTitle" placeholder="Untitled sketch" maxlength="80">
+
+        <div class="sk-bar">
+          <div class="sk-group" id="skTools"></div>
+
+          <div class="sk-group sk-colors">
+            <div class="sk-swatches" id="skSwatches"></div>
+            <label class="sk-custom" title="Custom colour">
+              <input type="color" id="skColor" aria-label="Custom colour">
+            </label>
+          </div>
+
+          <div class="sk-group sk-size">
+            <label for="skSize">Size</label>
+            <input type="range" class="range" id="skSize" min="1" max="40" step="1">
+            <span id="skSizeVal">4</span>
+          </div>
+
+          <div class="sk-group" id="skFillWrap" hidden>
+            <button class="sk-chip" id="skFill" aria-pressed="false">Fill</button>
+          </div>
+
+          <div class="sk-group">
+            <button class="sk-chip" id="skUndo" title="Undo">↶</button>
+            <button class="sk-chip" id="skRedo" title="Redo">↷</button>
+            <button class="sk-chip" id="skPaper">Dark paper</button>
+            <button class="sk-chip" id="skPng">PNG</button>
+            <button class="sk-chip warn" id="skClear">Clear</button>
+          </div>
+        </div>
+
+        <div class="sk-stage"><canvas id="skCanvas"></canvas></div>
+
+        <div class="note-meta">
+          <span class="stamp" id="skStamp">Not saved yet</span>
+          <button class="link-btn" id="skDel">Delete sketch</button>
         </div>
       </section>
     </section>
