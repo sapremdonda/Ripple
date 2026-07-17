@@ -1,10 +1,10 @@
 /* Ripple service worker.
    Bump CACHE when you change files so old copies are cleared. */
-const CACHE = 'ripple-v11';
+const CACHE = 'ripple-v12';
 const ASSETS = [
   'index.html', 'tasks.html', 'focus.html', 'notes.html', 'habits.html',
   'tools.html', 'settings.html', 'type.html', 'changelog.html', 'insights.html', 'breathe.html', 'study.html',
-  'styles.css', 'app.js', 'study-data.js', 'manifest.webmanifest', 'changelog.json',
+  'styles.css', 'app.js', 'study-data.js', 'study-bio.js', 'manifest.webmanifest', 'changelog.json',
   'favicon.svg', 'favicon-32.png', 'favicon-192.png',
   'apple-touch-icon.png', 'icon-512.png', 'maskable-512.png'
 ];

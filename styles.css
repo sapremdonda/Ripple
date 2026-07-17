@@ -1689,3 +1689,88 @@ body.breathing .breathe-ring.r3 { animation-delay: 1.6s; }
 /* Promote the blobs to their own layer so the blur is rasterised once and
    merely moved, instead of being recomputed every frame. */
 /* (no paint containment — it would clip the blur and create hard edges) */
+
+/* ============================================================
+   NOTE PICKER
+   ============================================================ */
+.np-modal { max-width: 480px; text-align: left; }
+.np-modal h2 { text-align: center; }
+.np-what { text-align: center; color: var(--teal); font-weight: 600; margin-bottom: 14px; }
+.np-list { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin: 12px 0; }
+.np-item {
+  display: flex; flex-direction: column; gap: 3px; text-align: left; width: 100%;
+  padding: 11px 13px; border-radius: var(--radius-sm); cursor: pointer;
+  background: var(--glass); border: 1px solid var(--glass-brd);
+  transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+.np-item:hover { background: var(--glass-strong); border-color: var(--teal); }
+.np-title { font-weight: 600; }
+.np-sub { font-size: .78rem; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-empty { color: var(--ink-faint); font-size: .86rem; text-align: center; padding: 18px 0; }
+.np-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* ============================================================
+   REVISION
+   ============================================================ */
+.rev-card .f-head { flex-wrap: wrap; }
+.rev-points { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rev-points li {
+  position: relative; padding-left: 22px; color: var(--ink-soft);
+  font-size: .92rem; line-height: 1.6;
+}
+.rev-points li::before {
+  content: ''; position: absolute; left: 4px; top: .62em;
+  width: 7px; height: 7px; border-radius: 2px;
+  background: linear-gradient(135deg, var(--teal), var(--violet));
+}
+.f-sub.biology { background: linear-gradient(120deg, #22c55e, var(--teal)); }
+
+/* ============================================================
+   BIOLOGY
+   ============================================================ */
+.bio-layout { align-items: start; }
+.bio-body { display: block; }
+.bio-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+.bio-title { font-size: 1.3rem; margin-top: 8px; }
+.bio-intro { color: var(--ink-soft); line-height: 1.7; margin-bottom: 18px; }
+.bio-fig {
+  margin: 0 0 22px; padding: 16px; border-radius: var(--radius-sm);
+  background: var(--field); border: 1px solid var(--glass-brd);
+}
+.bio-fig figcaption { text-align: center; font-size: .8rem; color: var(--ink-faint); margin-top: 10px; }
+.bio-svg { width: 100%; height: auto; display: block; overflow: visible; }
+/* diagram palette — follows the accent, works on both themes */
+.d-stroke { stroke: var(--ink-soft); stroke-width: 2; fill: none; }
+.d-stroke-thin { stroke: var(--ink-faint); stroke-width: 1.4; fill: none; }
+.d-fill-1 { fill: rgba(34,211,238,.12); stroke: var(--ink-soft); stroke-width: 2; }
+.d-fill-2 { fill: rgba(139,92,246,.10); }
+.d-fill-3 { fill: rgba(59,130,246,.18); stroke: var(--ink-soft); stroke-width: 2; }
+.d-fill-4 { fill: var(--violet); }
+.d-fill-5 { fill: rgba(251,113,133,.28); stroke: var(--ink-soft); stroke-width: 1.6; }
+.d-fill-6 { fill: rgba(45,212,191,.4); stroke: var(--ink-soft); stroke-width: 1.6; }
+.d-lead { stroke: var(--ink-faint); stroke-width: 1; stroke-dasharray: 3 3; }
+.d-label text { fill: var(--ink-soft); font-family: var(--font-body); font-size: 13px; font-weight: 500; }
+.d-in { fill: var(--ink); font-family: var(--font-mono); font-size: 15px; font-weight: 700; }
+
+.bio-note { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--glass-brd); }
+.bio-note:last-of-type { border-bottom: none; }
+.bio-note h4 { font-size: 1rem; margin-bottom: 6px; color: var(--aqua); }
+.bio-note p { color: var(--ink-soft); line-height: 1.7; font-size: .93rem; margin-bottom: 9px; }
+.bio-terms, .bio-rev { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--glass-brd); }
+.bio-terms h4, .bio-rev h4 { font-size: 1rem; margin-bottom: 12px; }
+.term-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-bottom: 12px; }
+.term { padding: 10px 12px; border-radius: 10px; background: var(--field); border: 1px solid var(--glass-brd);
+  display: flex; flex-direction: column; gap: 2px; }
+.term b { color: var(--teal); font-size: .88rem; }
+.term span { color: var(--ink-faint); font-size: .8rem; line-height: 1.45; }
+.bio-rev .rev-points { margin-bottom: 12px; }
+.bio-all { justify-content: flex-start; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--glass-brd); }
+.ion-col-head { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+.ion-row { cursor: pointer; }
+
+@media (max-width: 760px) {
+  .bio-layout { grid-template-columns: 1fr; }
+  .term-grid { grid-template-columns: 1fr; }
+  .np-list { max-height: 210px; }
+  .bio-fig { padding: 8px; }
+}

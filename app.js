@@ -2914,7 +2914,74 @@ function initSketch() {
 }
 
 /* ============================================================
-   STUDY — offline reference: formulas, periodic table, valencies
+   ADD TO NOTES — pick an existing note or start a new one
+   ============================================================ */
+function pickNote(title, body) {
+  return new Promise(resolve => {
+    const notes = store.get('notes', []) || [];
+    const scrim = document.createElement('div');
+    scrim.className = 'modal-scrim';
+    scrim.innerHTML = `<div class="card modal np-modal">
+      <h2>Add to notes</h2>
+      <p class="np-what">${escapeHtml(title)}</p>
+      ${notes.length ? `<input class="field" id="npSearch" placeholder="Search your notes…" autocomplete="off">` : ''}
+      <div class="np-list" id="npList"></div>
+      <div class="np-actions">
+        <button class="btn ghost" data-a="cancel">Cancel</button>
+        <button class="btn" data-a="new">+ New note</button>
+      </div>
+    </div>`;
+    document.body.appendChild(scrim);
+
+    function renderList(q) {
+      const list = $('#npList', scrim);
+      const f = (q || '').trim().toLowerCase();
+      const hits = notes.filter(n => !f || (n.title + ' ' + n.body).toLowerCase().includes(f));
+      if (!notes.length) {
+        list.innerHTML = `<p class="np-empty">You don’t have any notes yet — start one below.</p>`;
+        return;
+      }
+      list.innerHTML = hits.length ? hits.map(n => `
+        <button class="np-item" data-id="${n.id}">
+          <span class="np-title">${escapeHtml(n.title || 'Untitled')}</span>
+          <span class="np-sub">${escapeHtml((n.body || '').slice(0, 60)) || 'Empty'}</span>
+        </button>`).join('') : `<p class="np-empty">No note matches that.</p>`;
+    }
+    renderList();
+    const search = $('#npSearch', scrim);
+    if (search) { search.addEventListener('input', () => renderList(search.value)); search.focus(); }
+
+    const done = ok => { scrim.remove(); resolve(ok); };
+
+    scrim.addEventListener('click', e => {
+      if (e.target === scrim) return done(false);
+      const act = e.target.closest('[data-a]');
+      if (act) {
+        if (act.dataset.a === 'cancel') return done(false);
+        if (act.dataset.a === 'new') {
+          notes.unshift({ id: Date.now(), title, body, updated: Date.now() });
+          if (store.set('notes', notes)) { toast('Saved as a new note'); sfx('complete'); return done(true); }
+          return done(false);
+        }
+      }
+      const item = e.target.closest('.np-item');
+      if (item) {
+        const n = notes.find(x => x.id === Number(item.dataset.id));
+        if (!n) return;
+        n.body = (n.body ? n.body.trimEnd() + '\n\n———\n' : '') + body;
+        n.updated = Date.now();
+        if (store.set('notes', notes)) {
+          toast(`Added to “${n.title || 'Untitled'}”`); sfx('complete'); return done(true);
+        }
+        return done(false);
+      }
+    });
+  });
+}
+
+/* ============================================================
+   STUDY — offline reference: formulas, revision, biology,
+   the periodic table and valencies
    ============================================================ */
 
 /* Tiny formula formatter: ^ = superscript, _ = subscript.
@@ -2960,7 +3027,8 @@ function initStudy() {
   if (!D) { $('#formulaList').innerHTML = '<div class="empty"><p>Reference data didn’t load. Try refreshing.</p></div>'; return; }
 
   /* ---- mode ---- */
-  const views = { formulas: $('#formulasView'), elements: $('#elementsView'), ions: $('#ionsView') };
+  const views = { formulas: $('#formulasView'), revision: $('#revisionView'), bio: $('#bioView'),
+                  elements: $('#elementsView'), ions: $('#ionsView') };
   let mode = store.get('study:mode', 'formulas');
   if (!views[mode]) mode = 'formulas';
   function applyMode() {
@@ -2983,7 +3051,7 @@ function initStudy() {
   $('#subFilters').innerHTML = SUBS.map(([id, l]) =>
     `<button class="chip ${id === sub ? 'active' : ''}" data-sub="${id}">${l}</button>`).join('');
   $('#clsFilters').innerHTML = `<button class="chip ${!cls ? 'active' : ''}" data-cls="0">All</button>` +
-    [5, 6, 7, 8, 9, 10, 11, 12].map(c => `<button class="chip ${cls === c ? 'active' : ''}" data-cls="${c}">${c}</button>`).join('');
+    [8, 9, 10, 11, 12].map(c => `<button class="chip ${cls === c ? 'active' : ''}" data-cls="${c}">${c}</button>`).join('');
 
   // flatten topics into searchable items, each carrying its own class tags
   const ITEMS = [];
@@ -3069,9 +3137,7 @@ function initStudy() {
       try { await navigator.clipboard.writeText(plain); toast('Copied'); sfx('tap'); }
       catch { toast('Couldn’t copy — long-press to select'); }
     } else {
-      const notes = store.get('notes', []) || [];
-      notes.unshift({ id: Date.now(), title: it.n, body: plain + `\n\n(${it.ch})`, updated: Date.now() });
-      if (store.set('notes', notes)) { toast('Saved to your notes'); sfx('complete'); }
+      await pickNote(it.n, plain + `\n\n(${it.ch})`);
     }
   });
 
@@ -3122,7 +3188,10 @@ function initStudy() {
         <div><span class="faint">Group</span><b>${group}</b></div>
         <div><span class="faint">Period</span><b>${period}</b></div>
       </div>
-      ${/^\[/.test(mass) ? `<p class="f-note">Square brackets mean this element has no stable isotope — the figure is the mass number of its most stable known form.</p>` : ''}`;
+      ${/^\[/.test(mass) ? `<p class="f-note">Square brackets mean this element has no stable isotope — the figure is the mass number of its most stable known form.</p>` : ''}
+      <div class="f-acts"><button class="f-act" id="elAdd">Add to notes</button></div>`;
+    $('#elAdd').addEventListener('click', () => pickNote(`${name} (${sym})`,
+      `${name} — ${sym}\nAtomic number: ${z}\nAtomic mass: ${mass}\nCategory: ${D.catNames[cat] || cat}\nGroup: ${group}   Period: ${period}`));
     d.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     sfx('tap');
   });
@@ -3133,7 +3202,7 @@ function initStudy() {
     const row = ([formula, name, val, alias]) => {
       const hay = (formula + ' ' + name + ' ' + alias).toLowerCase().replace(/[_^{}]/g, '');
       if (f && !hay.includes(f)) return '';
-      return `<div class="ion-row">
+      return `<div class="ion-row" data-f="${escapeHtml(formula)}" data-n="${escapeHtml(name)}" data-v="${val}">
         <span class="ion-f">${fmtF(formula)}</span>
         <span class="ion-n">${escapeHtml(name)}${alias ? ` <i class="faint">${escapeHtml(alias)}</i>` : ''}</span>
         <span class="ion-v">${val}</span>
@@ -3146,6 +3215,143 @@ function initStudy() {
   }
   renderIons();
   $('#ionSearch').addEventListener('input', e => renderIons(e.target.value));
+  // tap any ion to send it to a note
+  $('#ionsView').addEventListener('click', e => {
+    const r = e.target.closest('.ion-row'); if (!r) return;
+    const plain = `${r.dataset.n}: ${r.dataset.f.replace(/[{}]/g, '')}  (valency ${r.dataset.v})`;
+    pickNote(r.dataset.n, plain);
+  });
+  $('#ionAddAll').addEventListener('click', () => {
+    const fmt = ([f, n, v, a]) => `${n}${a ? ' (' + a + ')' : ''}: ${f.replace(/[{}]/g, '')} — valency ${v}`;
+    const body = 'CATIONS\n' + D.ions.cations.map(fmt).join('\n') + '\n\nANIONS\n' + D.ions.anions.map(fmt).join('\n');
+    pickNote('Valencies — common ions', body);
+  });
+
+  /* ================= REVISION ================= */
+  let rSub = 'all', rCls = 0;
+  const REV = (D.revision || []);
+  $('#revSubFilters').innerHTML = [['all', 'All'], ['maths', 'Maths'], ['physics', 'Physics'], ['chemistry', 'Chemistry'], ['biology', 'Biology']]
+    .map(([id, l]) => `<button class="chip ${id === 'all' ? 'active' : ''}" data-sub="${id}">${l}</button>`).join('');
+  $('#revClsFilters').innerHTML = `<button class="chip active" data-cls="0">All</button>` +
+    [8, 9, 10, 11, 12].map(c => `<button class="chip" data-cls="${c}">${c}</button>`).join('');
+
+  function revItems() {
+    // biology revision lives with the bio chapters — fold it in here
+    const bio = (window.STUDY_BIO?.chapters || []).map(c => ({ sub: 'biology', ch: c.ch, cls: c.cls, points: c.revision || [] }));
+    return REV.concat(bio);
+  }
+  function renderRevision() {
+    const hits = revItems().filter(r =>
+      (rSub === 'all' || r.sub === rSub) && (!rCls || (r.cls || []).includes(rCls)) && r.points.length);
+    $('#revCount').textContent = `${hits.length} chapter${hits.length === 1 ? '' : 's'} · ${hits.reduce((a, b) => a + b.points.length, 0)} points`;
+    $('#revisionList').innerHTML = hits.length ? hits.map(r => `
+      <section class="card f-group rev-card" data-ch="${escapeHtml(r.ch)}" data-sub="${r.sub}">
+        <div class="f-head">
+          <span class="f-sub ${r.sub}">${r.sub}</span>
+          <h3>${escapeHtml(r.ch)}</h3>
+          ${r.cls?.length ? `<span class="f-cls">Class ${r.cls.join(', ')}</span>` : ''}
+        </div>
+        <ul class="rev-points">${r.points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
+        <div class="f-acts"><button class="f-act" data-act="rev-note">Add to notes</button></div>
+      </section>`).join('')
+      : `<div class="empty"><div class="em-ic">📝</div><p>No revision notes match those filters yet.</p></div>`;
+  }
+  $('#revSubFilters').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    rSub = b.dataset.sub; $$('#revSubFilters .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); renderRevision(); sfx('tap');
+  });
+  $('#revClsFilters').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    rCls = +b.dataset.cls; $$('#revClsFilters .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); renderRevision(); sfx('tap');
+  });
+  $('#revisionList').addEventListener('click', e => {
+    const b = e.target.closest('[data-act="rev-note"]'); if (!b) return;
+    const card = b.closest('.rev-card');
+    const r = revItems().find(x => x.ch === card.dataset.ch && x.sub === card.dataset.sub);
+    if (!r) return;
+    pickNote(`Revision — ${r.ch}`, r.points.map(p => '• ' + p).join('\n'));
+  });
+  renderRevision();
+
+  /* ================= BIOLOGY ================= */
+  const BIO = window.STUDY_BIO;
+  if (BIO) {
+    let bioId = store.get('study:bio', BIO.chapters[0].id);
+    if (!BIO.chapters.some(c => c.id === bioId)) bioId = BIO.chapters[0].id;
+
+    function renderBioList() {
+      $('#bioList').innerHTML = BIO.chapters.map(c => `
+        <div class="note-item ${c.id === bioId ? 'active' : ''}" data-id="${c.id}">
+          <h4>${escapeHtml(c.ch)}</h4>
+          <p>Class ${(c.cls || []).join(', ')}</p>
+        </div>`).join('');
+    }
+    function renderBio() {
+      const c = BIO.chapters.find(x => x.id === bioId);
+      if (!c) return;
+      $('#bioBody').innerHTML = `
+        <div class="bio-head">
+          <div>
+            <span class="f-sub biology">biology</span>
+            <h3 class="bio-title">${escapeHtml(c.ch)}</h3>
+          </div>
+          <span class="f-cls">Class ${(c.cls || []).join(', ')}</span>
+        </div>
+        <p class="bio-intro">${escapeHtml(c.intro)}</p>
+        ${c.diagram && BIO.diagrams[c.diagram] ? `
+          <figure class="bio-fig">
+            ${BIO.diagrams[c.diagram]}
+            <figcaption>${escapeHtml(c.ch)}</figcaption>
+          </figure>` : ''}
+        ${c.notes.map(n => `
+          <section class="bio-note">
+            <h4>${escapeHtml(n.h)}</h4>
+            <p>${escapeHtml(n.p)}</p>
+            <button class="f-act" data-bio="note" data-h="${escapeHtml(n.h)}">Add to notes</button>
+          </section>`).join('')}
+        ${c.terms?.length ? `
+          <section class="bio-terms">
+            <h4>Key terms</h4>
+            <div class="term-grid">${c.terms.map(([t, m]) => `
+              <div class="term"><b>${escapeHtml(t)}</b><span>${escapeHtml(m)}</span></div>`).join('')}</div>
+            <button class="f-act" data-bio="terms">Add terms to notes</button>
+          </section>` : ''}
+        ${c.revision?.length ? `
+          <section class="bio-rev">
+            <h4>Revision — the points that get marks</h4>
+            <ul class="rev-points">${c.revision.map(p => `<li>${escapeHtml(p)}</li>`).join('')}</ul>
+            <button class="f-act" data-bio="rev">Add revision to notes</button>
+          </section>` : ''}
+        <div class="f-acts bio-all"><button class="f-act" data-bio="all">Add the whole chapter to notes</button></div>`;
+    }
+    $('#bioList').addEventListener('click', e => {
+      const it = e.target.closest('.note-item'); if (!it) return;
+      bioId = it.dataset.id; store.set('study:bio', bioId);
+      renderBioList(); renderBio(); sfx('tap');
+      $('#bioBody').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+    $('#bioBody').addEventListener('click', e => {
+      const b = e.target.closest('[data-bio]'); if (!b) return;
+      const c = BIO.chapters.find(x => x.id === bioId);
+      const kind = b.dataset.bio;
+      if (kind === 'note') {
+        const n = c.notes.find(x => x.h === b.dataset.h);
+        return void pickNote(`${c.ch} — ${n.h}`, `${n.h}\n\n${n.p}`);
+      }
+      if (kind === 'terms') return void pickNote(`${c.ch} — key terms`, c.terms.map(([t, m]) => `${t}: ${m}`).join('\n'));
+      if (kind === 'rev') return void pickNote(`${c.ch} — revision`, c.revision.map(p => '• ' + p).join('\n'));
+      if (kind === 'all') {
+        const body = [c.intro, '',
+          ...c.notes.map(n => `${n.h}\n${n.p}`), '',
+          'KEY TERMS', ...c.terms.map(([t, m]) => `${t}: ${m}`), '',
+          'REVISION', ...c.revision.map(p => '• ' + p)].join('\n');
+        return void pickNote(c.ch, body);
+      }
+    });
+    renderBioList(); renderBio();
+  }
 }
 
 /* ============================================================

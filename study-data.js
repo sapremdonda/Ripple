@@ -124,46 +124,75 @@ window.STUDY = {
   formulas: [
 
     /* ================= MATHS ================= */
-    { sub:'maths', ch:'Mensuration — plane figures', cls:[5,6,7,8], items:[
+    { sub:'maths', ch:'Rational numbers and number system', cls:[8,9], items:[
+      { n:'Commutative property', f:'a + b = b + a,   a × b = b × a', note:'Not true for subtraction or division.' },
+      { n:'Associative property', f:'(a + b) + c = a + (b + c)' },
+      { n:'Distributive property', f:'a(b + c) = ab + ac' },
+      { n:'Additive identity / inverse', f:'a + 0 = a,   a + (−a) = 0' },
+      { n:'Multiplicative identity / inverse', f:'a × 1 = a,   a × (1/a) = 1' },
+      { n:'Rationalising a surd', f:'1/√a = √a / a' },
+      { n:'Rationalising a binomial surd', f:'1/(√a + √b) = (√a − √b) / (a − b)', cls:[9] },
+      { n:'Surd laws', f:'√a × √b = √(ab),   √a / √b = √(a/b)', cls:[9] },
+      { n:'HCF and LCM', f:'HCF(a,b) × LCM(a,b) = a × b', cls:[10] }
+    ]},
+    { sub:'maths', ch:'Squares, cubes and roots', cls:[8], items:[
+      { n:'Square of a number ending in 5', f:'(10a + 5)^2 = 100a(a + 1) + 25', note:'e.g. 35² = 3×4 = 12 → 1225.' },
+      { n:'Pythagorean triplet', f:'(2m, m^2 − 1, m^2 + 1)', v:[['m','any integer > 1']] },
+      { n:'Sum of first n odd numbers', f:'1 + 3 + 5 + … + (2n − 1) = n^2' },
+      { n:'Cube root by prime factorisation', f:'∛(a^3 b^3) = ab' }
+    ]},
+    { sub:'maths', ch:'Mensuration — plane figures', cls:[8,9,10], items:[
       { n:'Perimeter of a rectangle', f:'P = 2(l + b)', v:[['l','length'],['b','breadth']] },
       { n:'Area of a rectangle', f:'A = l × b' },
       { n:'Perimeter of a square', f:'P = 4a', v:[['a','side']] },
       { n:'Area of a square', f:'A = a^2' },
       { n:'Area of a triangle', f:'A = ½ × b × h', v:[['b','base'],['h','height']] },
+      { n:'Area of an equilateral triangle', f:'A = (√3/4) a^2' },
       { n:'Area of a parallelogram', f:'A = b × h' },
       { n:'Area of a trapezium', f:'A = ½ (a + b) h', v:[['a, b','parallel sides'],['h','distance between them']] },
       { n:'Area of a rhombus', f:'A = ½ d_1 d_2', v:[['d_1, d_2','diagonals']] },
-      { n:'Circumference of a circle', f:'C = 2πr' },
+      { n:'Area of a general quadrilateral', f:'A = ½ d (h_1 + h_2)', v:[['d','diagonal'],['h_1, h_2','offsets']] },
+      { n:'Circumference of a circle', f:'C = 2πr = πd' },
       { n:'Area of a circle', f:'A = πr^2' },
-      { n:'Length of an arc', f:'l = (θ/360°) × 2πr', v:[['θ','angle at centre']] },
-      { n:'Area of a sector', f:'A = (θ/360°) × πr^2' }
+      { n:'Area of a ring (annulus)', f:'A = π(R^2 − r^2)' },
+      { n:'Length of an arc', f:'l = (θ/360°) × 2πr', v:[['θ','angle at centre']], cls:[10] },
+      { n:'Area of a sector', f:'A = (θ/360°) × πr^2', cls:[10] },
+      { n:'Area of a segment', f:'A = area of sector − area of triangle', cls:[10] },
+      { n:"Heron's formula", f:'A = √(s(s−a)(s−b)(s−c))', v:[['s','semi-perimeter, s = (a+b+c)/2']], note:'Use when you know all three sides but no height.', cls:[9] }
     ]},
     { sub:'maths', ch:'Mensuration — solids', cls:[8,9,10], items:[
       { n:'Volume of a cuboid', f:'V = l × b × h' },
-      { n:'Surface area of a cuboid', f:'S = 2(lb + bh + hl)' },
+      { n:'Total surface area of a cuboid', f:'TSA = 2(lb + bh + hl)' },
+      { n:'Lateral surface area of a cuboid', f:'LSA = 2h(l + b)' },
+      { n:'Diagonal of a cuboid', f:'d = √(l^2 + b^2 + h^2)' },
       { n:'Volume of a cube', f:'V = a^3' },
       { n:'Surface area of a cube', f:'S = 6a^2' },
+      { n:'Diagonal of a cube', f:'d = a√3' },
       { n:'Volume of a cylinder', f:'V = πr^2 h' },
       { n:'Curved surface area of a cylinder', f:'CSA = 2πrh' },
       { n:'Total surface area of a cylinder', f:'TSA = 2πr(r + h)' },
+      { n:'Volume of a hollow cylinder', f:'V = πh(R^2 − r^2)' },
       { n:'Volume of a cone', f:'V = ⅓ πr^2 h' },
       { n:'Curved surface area of a cone', f:'CSA = πrl', v:[['l','slant height, l = √(r² + h²)']] },
       { n:'Total surface area of a cone', f:'TSA = πr(l + r)' },
       { n:'Volume of a sphere', f:'V = (4/3) πr^3' },
       { n:'Surface area of a sphere', f:'S = 4πr^2' },
       { n:'Volume of a hemisphere', f:'V = (2/3) πr^3' },
+      { n:'Curved surface area of a hemisphere', f:'CSA = 2πr^2' },
       { n:'Total surface area of a hemisphere', f:'TSA = 3πr^2' },
       { n:'Volume of a frustum', f:'V = ⅓ πh(R^2 + r^2 + Rr)', cls:[10] },
-      { n:"Heron's formula", f:'A = √(s(s−a)(s−b)(s−c))', v:[['s','semi-perimeter, s = (a+b+c)/2']], note:'Use when you know all three sides but no height.', cls:[9] }
+      { n:'Curved surface area of a frustum', f:'CSA = πl(R + r)', v:[['l','√(h² + (R−r)²)']], cls:[10] }
     ]},
-    { sub:'maths', ch:'Exponents and powers', cls:[7,8,9], items:[
+    { sub:'maths', ch:'Exponents and powers', cls:[8,9], items:[
       { n:'Product rule', f:'a^m × a^n = a^{m+n}' },
       { n:'Quotient rule', f:'a^m ÷ a^n = a^{m−n}' },
       { n:'Power of a power', f:'(a^m)^n = a^{mn}' },
       { n:'Power of a product', f:'(ab)^m = a^m b^m' },
+      { n:'Power of a quotient', f:'(a/b)^m = a^m / b^m' },
       { n:'Zero exponent', f:'a^0 = 1', note:'For any a ≠ 0.' },
       { n:'Negative exponent', f:'a^{−n} = 1 / a^n' },
-      { n:'Fractional exponent', f:'a^{m/n} = ⁿ√(a^m)' }
+      { n:'Fractional exponent', f:'a^{m/n} = ⁿ√(a^m)' },
+      { n:'Standard form', f:'a × 10^n', v:[['a','1 ≤ a < 10']] }
     ]},
     { sub:'maths', ch:'Algebraic identities', cls:[8,9], items:[
       { n:'Square of a sum', f:'(a + b)^2 = a^2 + 2ab + b^2' },
@@ -171,165 +200,365 @@ window.STUDY = {
       { n:'Difference of squares', f:'a^2 − b^2 = (a + b)(a − b)' },
       { n:'Product of binomials', f:'(x + a)(x + b) = x^2 + (a + b)x + ab' },
       { n:'Square of a trinomial', f:'(a + b + c)^2 = a^2 + b^2 + c^2 + 2ab + 2bc + 2ca', cls:[9] },
-      { n:'Cube of a sum', f:'(a + b)^3 = a^3 + b^3 + 3ab(a + b)', cls:[9] },
-      { n:'Cube of a difference', f:'(a − b)^3 = a^3 − b^3 − 3ab(a − b)', cls:[9] },
+      { n:'Cube of a sum', f:'(a + b)^3 = a^3 + 3a^2b + 3ab^2 + b^3 = a^3 + b^3 + 3ab(a + b)', cls:[9] },
+      { n:'Cube of a difference', f:'(a − b)^3 = a^3 − 3a^2b + 3ab^2 − b^3', cls:[9] },
       { n:'Sum of cubes', f:'a^3 + b^3 = (a + b)(a^2 − ab + b^2)', cls:[9] },
       { n:'Difference of cubes', f:'a^3 − b^3 = (a − b)(a^2 + ab + b^2)', cls:[9] },
-      { n:'Three-cube identity', f:'a^3 + b^3 + c^3 − 3abc = (a + b + c)(a^2 + b^2 + c^2 − ab − bc − ca)', note:'If a + b + c = 0, then a³ + b³ + c³ = 3abc.', cls:[9] }
+      { n:'Three-cube identity', f:'a^3 + b^3 + c^3 − 3abc = (a + b + c)(a^2 + b^2 + c^2 − ab − bc − ca)', note:'If a + b + c = 0, then a³ + b³ + c³ = 3abc.', cls:[9] },
+      { n:'Useful rearrangement', f:'a^2 + b^2 = (a + b)^2 − 2ab' }
     ]},
-    { sub:'maths', ch:'Commercial mathematics', cls:[7,8], items:[
+    { sub:'maths', ch:'Commercial mathematics', cls:[8], items:[
       { n:'Simple interest', f:'SI = (P × R × T) / 100', v:[['P','principal'],['R','rate % p.a.'],['T','time in years']] },
       { n:'Amount (compound interest)', f:'A = P(1 + R/100)^n', v:[['n','number of compounding periods']] },
       { n:'Compound interest', f:'CI = A − P' },
+      { n:'CI compounded half-yearly', f:'A = P(1 + R/200)^{2n}' },
+      { n:'CI compounded quarterly', f:'A = P(1 + R/400)^{4n}' },
+      { n:'Growth / depreciation', f:'A = P(1 ± R/100)^n', note:'+ for growth, − for depreciation.' },
       { n:'Profit percentage', f:'Profit % = (Profit / CP) × 100' },
       { n:'Loss percentage', f:'Loss % = (Loss / CP) × 100' },
+      { n:'Selling price from profit %', f:'SP = CP × (100 + P%) / 100' },
       { n:'Discount', f:'Discount = MP − SP', v:[['MP','marked price'],['SP','selling price']] },
+      { n:'Discount percentage', f:'Discount % = (Discount / MP) × 100' },
       { n:'Percentage change', f:'% change = ((new − old) / old) × 100' },
-      { n:'Speed', f:'Speed = Distance / Time' }
+      { n:'Direct proportion', f:'x / y = k' },
+      { n:'Inverse proportion', f:'xy = k' }
+    ]},
+    { sub:'maths', ch:'Linear equations and inequalities', cls:[8,9,10,11], items:[
+      { n:'Linear equation in one variable', f:'ax + b = 0  ⟹  x = −b / a' },
+      { n:'Linear equation in two variables', f:'ax + by + c = 0', cls:[9] },
+      { n:'Pair of equations — unique solution', f:'a_1/a_2 ≠ b_1/b_2', note:'Lines intersect: consistent.', cls:[10] },
+      { n:'Pair of equations — infinitely many', f:'a_1/a_2 = b_1/b_2 = c_1/c_2', note:'Coincident lines.', cls:[10] },
+      { n:'Pair of equations — no solution', f:'a_1/a_2 = b_1/b_2 ≠ c_1/c_2', note:'Parallel lines: inconsistent.', cls:[10] },
+      { n:'Cross-multiplication method', f:'x / (b_1c_2 − b_2c_1) = y / (c_1a_2 − c_2a_1) = 1 / (a_1b_2 − a_2b_1)', cls:[10] },
+      { n:'Inequality sign flip', f:'a < b  ⟹  −a > −b', note:'Multiplying or dividing by a negative reverses the sign.', cls:[11] }
     ]},
     { sub:'maths', ch:'Polynomials', cls:[9,10], items:[
       { n:'Remainder theorem', f:'p(x) ÷ (x − a) leaves remainder p(a)' },
       { n:'Factor theorem', f:'(x − a) is a factor of p(x) ⟺ p(a) = 0' },
+      { n:'Division algorithm', f:'p(x) = g(x) × q(x) + r(x)', v:[['r(x)','0 or degree < degree of g(x)']] },
       { n:'Quadratic: sum of zeroes', f:'α + β = −b/a', note:'For ax² + bx + c = 0.' },
       { n:'Quadratic: product of zeroes', f:'αβ = c/a' },
+      { n:'Building a quadratic from its zeroes', f:'x^2 − (α + β)x + αβ = 0' },
       { n:'Cubic: relations', f:'α+β+γ = −b/a,  αβ+βγ+γα = c/a,  αβγ = −d/a', note:'For ax³ + bx² + cx + d = 0.' }
     ]},
     { sub:'maths', ch:'Quadratic equations', cls:[10,11], items:[
       { n:'Quadratic formula', f:'x = (−b ± √(b^2 − 4ac)) / 2a' },
       { n:'Discriminant', f:'D = b^2 − 4ac' },
-      { n:'Nature of roots', f:'D > 0: two distinct real  ·  D = 0: two equal real  ·  D < 0: no real roots' }
+      { n:'Nature of roots', f:'D > 0: two distinct real  ·  D = 0: two equal real  ·  D < 0: no real roots' },
+      { n:'Completing the square', f:'x^2 + bx = (x + b/2)^2 − b^2/4' },
+      { n:'Roots in terms of the discriminant', f:'|α − β| = √D / |a|' }
+    ]},
+    { sub:'maths', ch:'Triangles and circles', cls:[9,10], items:[
+      { n:'Angle sum of a triangle', f:'∠A + ∠B + ∠C = 180°' },
+      { n:'Exterior angle theorem', f:'exterior angle = sum of the two opposite interior angles' },
+      { n:'Angle sum of a polygon', f:'(n − 2) × 180°' },
+      { n:'Each exterior angle of a regular polygon', f:'360° / n' },
+      { n:'Basic Proportionality (Thales)', f:'DE ∥ BC  ⟹  AD/DB = AE/EC', cls:[10] },
+      { n:'Similar triangles — sides', f:'AB/PQ = BC/QR = CA/RP', cls:[10] },
+      { n:'Similar triangles — areas', f:'ar(ABC) / ar(PQR) = (AB/PQ)^2', cls:[10] },
+      { n:'Pythagoras theorem', f:'AC^2 = AB^2 + BC^2', note:'Right-angled at B.' },
+      { n:'Angle subtended at the centre', f:'∠ at centre = 2 × ∠ at the remaining circumference' },
+      { n:'Angle in a semicircle', f:'∠ = 90°' },
+      { n:'Cyclic quadrilateral', f:'opposite angles sum to 180°' },
+      { n:'Tangent and radius', f:'tangent ⟂ radius at the point of contact', cls:[10] },
+      { n:'Tangents from an external point', f:'they are equal in length', cls:[10] }
     ]},
     { sub:'maths', ch:'Arithmetic and geometric progressions', cls:[10,11], items:[
       { n:'AP — nth term', f:'a_n = a + (n − 1)d' },
+      { n:'AP — common difference', f:'d = a_n − a_{n−1}' },
       { n:'AP — sum of n terms', f:'S_n = (n/2) [2a + (n − 1)d]' },
       { n:'AP — sum using last term', f:'S_n = (n/2)(a + l)', v:[['l','last term']] },
+      { n:'AP — nth term from the end', f:'l − (n − 1)d' },
+      { n:'Arithmetic mean', f:'AM = (a + b) / 2' },
       { n:'GP — nth term', f:'a_n = a r^{n−1}', cls:[11] },
       { n:'GP — sum of n terms', f:'S_n = a(r^n − 1) / (r − 1)', note:'For r ≠ 1.', cls:[11] },
       { n:'GP — sum to infinity', f:'S_{∞} = a / (1 − r)', note:'Only when |r| < 1.', cls:[11] },
+      { n:'Geometric mean', f:'GM = √(ab)', cls:[11] },
+      { n:'AM ≥ GM', f:'(a + b)/2 ≥ √(ab)', cls:[11] },
       { n:'Sum of first n naturals', f:'Σn = n(n + 1) / 2' },
       { n:'Sum of first n squares', f:'Σn^2 = n(n + 1)(2n + 1) / 6', cls:[11] },
       { n:'Sum of first n cubes', f:'Σn^3 = [n(n + 1) / 2]^2', cls:[11] }
     ]},
     { sub:'maths', ch:'Coordinate geometry', cls:[9,10,11], items:[
       { n:'Distance formula', f:'d = √((x_2 − x_1)^2 + (y_2 − y_1)^2)' },
+      { n:'Distance from the origin', f:'d = √(x^2 + y^2)' },
       { n:'Midpoint formula', f:'M = ((x_1 + x_2)/2, (y_1 + y_2)/2)' },
       { n:'Section formula (internal)', f:'P = ((mx_2 + nx_1)/(m+n), (my_2 + ny_1)/(m+n))' },
+      { n:'Section formula (external)', f:'P = ((mx_2 − nx_1)/(m−n), (my_2 − ny_1)/(m−n))', cls:[11] },
       { n:'Centroid of a triangle', f:'G = ((x_1+x_2+x_3)/3, (y_1+y_2+y_3)/3)' },
       { n:'Area of a triangle', f:'A = ½ |x_1(y_2 − y_3) + x_2(y_3 − y_1) + x_3(y_1 − y_2)|' },
+      { n:'Collinearity test', f:'area of the triangle = 0' },
       { n:'Slope of a line', f:'m = (y_2 − y_1) / (x_2 − x_1) = tan θ', cls:[11] },
       { n:'Slope–intercept form', f:'y = mx + c', cls:[11] },
       { n:'Point–slope form', f:'y − y_1 = m(x − x_1)', cls:[11] },
+      { n:'Two-point form', f:'(y − y_1)/(y_2 − y_1) = (x − x_1)/(x_2 − x_1)', cls:[11] },
+      { n:'Intercept form', f:'x/a + y/b = 1', cls:[11] },
+      { n:'Normal form', f:'x cos ω + y sin ω = p', cls:[11] },
+      { n:'General form', f:'Ax + By + C = 0,   slope = −A/B', cls:[11] },
       { n:'Distance of a point from a line', f:'d = |Ax_1 + By_1 + C| / √(A^2 + B^2)', cls:[11] },
+      { n:'Distance between parallel lines', f:'d = |C_1 − C_2| / √(A^2 + B^2)', cls:[11] },
+      { n:'Angle between two lines', f:'tan θ = |(m_1 − m_2) / (1 + m_1m_2)|', cls:[11] },
       { n:'Parallel and perpendicular lines', f:'Parallel: m_1 = m_2   ·   Perpendicular: m_1 m_2 = −1', cls:[11] }
+    ]},
+    { sub:'maths', ch:'Conic sections', cls:[11], items:[
+      { n:'Circle — standard form', f:'(x − h)^2 + (y − k)^2 = r^2' },
+      { n:'Circle — general form', f:'x^2 + y^2 + 2gx + 2fy + c = 0', v:[['centre','(−g, −f)'],['radius','√(g² + f² − c)']] },
+      { n:'Parabola', f:'y^2 = 4ax', v:[['focus','(a, 0)'],['directrix','x = −a'],['latus rectum','4a']] },
+      { n:'Ellipse', f:'x^2/a^2 + y^2/b^2 = 1', v:[['eccentricity','e = √(1 − b²/a²)'],['latus rectum','2b²/a']] },
+      { n:'Hyperbola', f:'x^2/a^2 − y^2/b^2 = 1', v:[['eccentricity','e = √(1 + b²/a²)']] },
+      { n:'Eccentricity summary', f:'circle e = 0  ·  ellipse e < 1  ·  parabola e = 1  ·  hyperbola e > 1' }
     ]},
     { sub:'maths', ch:'Trigonometry', cls:[10,11], items:[
       { n:'Basic ratios', f:'sin θ = P/H,  cos θ = B/H,  tan θ = P/B', v:[['P','perpendicular'],['B','base'],['H','hypotenuse']] },
       { n:'Reciprocal ratios', f:'cosec θ = 1/sin θ,  sec θ = 1/cos θ,  cot θ = 1/tan θ' },
-      { n:'Quotient identity', f:'tan θ = sin θ / cos θ' },
+      { n:'Quotient identities', f:'tan θ = sin θ / cos θ,   cot θ = cos θ / sin θ' },
       { n:'Pythagorean identity', f:'sin^2 θ + cos^2 θ = 1' },
       { n:'Secant identity', f:'1 + tan^2 θ = sec^2 θ' },
       { n:'Cosecant identity', f:'1 + cot^2 θ = cosec^2 θ' },
-      { n:'Complementary angles', f:'sin(90° − θ) = cos θ,  tan(90° − θ) = cot θ' },
+      { n:'Complementary angles', f:'sin(90° − θ) = cos θ,  tan(90° − θ) = cot θ,  sec(90° − θ) = cosec θ' },
       { n:'Standard values — sin', f:'sin 0° = 0,  sin 30° = ½,  sin 45° = 1/√2,  sin 60° = √3/2,  sin 90° = 1' },
       { n:'Standard values — cos', f:'cos 0° = 1,  cos 30° = √3/2,  cos 45° = 1/√2,  cos 60° = ½,  cos 90° = 0' },
       { n:'Standard values — tan', f:'tan 0° = 0,  tan 30° = 1/√3,  tan 45° = 1,  tan 60° = √3,  tan 90° = ∞' },
+      { n:'Radian measure', f:'π radians = 180°,   1 rad ≈ 57.30°', cls:[11] },
+      { n:'Arc length', f:'l = rθ', v:[['θ','in radians']], cls:[11] },
+      { n:'Signs by quadrant', f:'I: all  ·  II: sin  ·  III: tan  ·  IV: cos', note:'"Add Sugar To Coffee".', cls:[11] },
       { n:'Compound angle — sine', f:'sin(A ± B) = sin A cos B ± cos A sin B', cls:[11] },
       { n:'Compound angle — cosine', f:'cos(A ± B) = cos A cos B ∓ sin A sin B', cls:[11] },
       { n:'Compound angle — tangent', f:'tan(A ± B) = (tan A ± tan B) / (1 ∓ tan A tan B)', cls:[11] },
-      { n:'Double angle — sine', f:'sin 2A = 2 sin A cos A', cls:[11] },
+      { n:'Double angle — sine', f:'sin 2A = 2 sin A cos A = 2 tan A / (1 + tan^2 A)', cls:[11] },
       { n:'Double angle — cosine', f:'cos 2A = cos^2 A − sin^2 A = 2cos^2 A − 1 = 1 − 2sin^2 A', cls:[11] },
       { n:'Double angle — tangent', f:'tan 2A = 2 tan A / (1 − tan^2 A)', cls:[11] },
+      { n:'Triple angle — sine', f:'sin 3A = 3 sin A − 4 sin^3 A', cls:[11] },
+      { n:'Triple angle — cosine', f:'cos 3A = 4 cos^3 A − 3 cos A', cls:[11] },
+      { n:'Half angle', f:'sin^2 (A/2) = (1 − cos A)/2,   cos^2 (A/2) = (1 + cos A)/2', cls:[11] },
+      { n:'Sum to product', f:'sin C + sin D = 2 sin((C+D)/2) cos((C−D)/2)', cls:[11] },
+      { n:'Product to sum', f:'2 sin A cos B = sin(A + B) + sin(A − B)', cls:[11] },
       { n:'Sine rule', f:'a/sin A = b/sin B = c/sin C = 2R', cls:[11] },
-      { n:'Cosine rule', f:'c^2 = a^2 + b^2 − 2ab cos C', cls:[11] }
+      { n:'Cosine rule', f:'c^2 = a^2 + b^2 − 2ab cos C', cls:[11] },
+      { n:'General solution — sine', f:'sin θ = sin α  ⟹  θ = nπ + (−1)^n α', cls:[11] },
+      { n:'General solution — cosine', f:'cos θ = cos α  ⟹  θ = 2nπ ± α', cls:[11] },
+      { n:'General solution — tangent', f:'tan θ = tan α  ⟹  θ = nπ + α', cls:[11] }
+    ]},
+    { sub:'maths', ch:'Inverse trigonometry', cls:[12], items:[
+      { n:'Principal value ranges', f:'sin^{−1}: [−π/2, π/2]  ·  cos^{−1}: [0, π]  ·  tan^{−1}: (−π/2, π/2)' },
+      { n:'Complementary pairs', f:'sin^{−1}x + cos^{−1}x = π/2,   tan^{−1}x + cot^{−1}x = π/2' },
+      { n:'Negative argument', f:'sin^{−1}(−x) = −sin^{−1}x,   cos^{−1}(−x) = π − cos^{−1}x' },
+      { n:'Sum of arctangents', f:'tan^{−1}x + tan^{−1}y = tan^{−1}((x + y)/(1 − xy))', note:'When xy < 1.' },
+      { n:'Double arctangent', f:'2 tan^{−1}x = tan^{−1}(2x/(1 − x^2))' }
+    ]},
+    { sub:'maths', ch:'Sets, relations and functions', cls:[11], items:[
+      { n:'Number of subsets', f:'2^n', v:[['n','number of elements']] },
+      { n:'Number of proper subsets', f:'2^n − 1' },
+      { n:'Union of two sets', f:'n(A ∪ B) = n(A) + n(B) − n(A ∩ B)' },
+      { n:'Union of three sets', f:'n(A∪B∪C) = n(A)+n(B)+n(C) − n(A∩B) − n(B∩C) − n(C∩A) + n(A∩B∩C)' },
+      { n:"De Morgan's laws", f:'(A ∪ B)′ = A′ ∩ B′,   (A ∩ B)′ = A′ ∪ B′' },
+      { n:'Cartesian product', f:'n(A × B) = n(A) × n(B)' },
+      { n:'Number of relations', f:'2^{n(A) × n(B)}' }
+    ]},
+    { sub:'maths', ch:'Complex numbers', cls:[11], items:[
+      { n:'Imaginary unit', f:'i = √(−1),   i^2 = −1,   i^3 = −i,   i^4 = 1' },
+      { n:'Modulus', f:'|z| = √(a^2 + b^2)', v:[['z','a + ib']] },
+      { n:'Conjugate', f:'z̄ = a − ib,   z z̄ = |z|^2' },
+      { n:'Polar form', f:'z = r(cos θ + i sin θ)', v:[['r','|z|'],['θ','argument']] },
+      { n:'Multiplication of moduli', f:'|z_1 z_2| = |z_1| |z_2|' },
+      { n:'Roots of a negative discriminant', f:'x = (−b ± i√(4ac − b^2)) / 2a' }
     ]},
     { sub:'maths', ch:'Permutations, combinations and binomial', cls:[11], items:[
       { n:'Factorial', f:'n! = n × (n−1) × … × 2 × 1', note:'0! = 1.' },
       { n:'Permutations', f:'^nP_r = n! / (n − r)!', note:'Order matters.' },
+      { n:'Permutations with repetition', f:'n^r' },
+      { n:'Permutations of alike objects', f:'n! / (p! q! r!)' },
+      { n:'Circular permutations', f:'(n − 1)!' },
       { n:'Combinations', f:'^nC_r = n! / (r! (n − r)!)', note:'Order does not matter.' },
       { n:'Symmetry of combinations', f:'^nC_r = ^nC_{n−r}' },
+      { n:"Pascal's rule", f:'^nC_r + ^nC_{r−1} = ^{n+1}C_r' },
+      { n:'Relation between P and C', f:'^nP_r = ^nC_r × r!' },
       { n:'Binomial theorem', f:'(a + b)^n = Σ ^nC_r a^{n−r} b^r' },
-      { n:'General term', f:'T_{r+1} = ^nC_r a^{n−r} b^r' }
+      { n:'General term', f:'T_{r+1} = ^nC_r a^{n−r} b^r' },
+      { n:'Middle term', f:'n even: T_{n/2 + 1}   ·   n odd: T_{(n+1)/2} and T_{(n+3)/2}' },
+      { n:'Number of terms', f:'n + 1' },
+      { n:'Sum of binomial coefficients', f:'Σ ^nC_r = 2^n' }
     ]},
-    { sub:'maths', ch:'Statistics and probability', cls:[9,10,11], items:[
+    { sub:'maths', ch:'Statistics and probability', cls:[9,10,11,12], items:[
       { n:'Mean (ungrouped)', f:'x̄ = Σx_i / n' },
       { n:'Mean (grouped, direct)', f:'x̄ = Σf_i x_i / Σf_i' },
       { n:'Mean (assumed mean)', f:'x̄ = a + Σf_i d_i / Σf_i', v:[['d_i','x_i − a']] },
+      { n:'Mean (step deviation)', f:'x̄ = a + h × (Σf_i u_i / Σf_i)', v:[['u_i','(x_i − a)/h']] },
       { n:'Mode (grouped)', f:'Mode = l + [(f_1 − f_0) / (2f_1 − f_0 − f_2)] × h', cls:[10] },
       { n:'Median (grouped)', f:'Median = l + [(n/2 − cf) / f] × h', cls:[10] },
       { n:'Empirical relation', f:'3 Median = Mode + 2 Mean', cls:[10] },
-      { n:'Variance', f:'σ^2 = Σ(x_i − x̄)^2 / n', cls:[11] },
+      { n:'Range', f:'Range = max − min', cls:[11] },
+      { n:'Mean deviation', f:'MD = Σ|x_i − x̄| / n', cls:[11] },
+      { n:'Variance', f:'σ^2 = Σ(x_i − x̄)^2 / n = (Σx_i^2 / n) − x̄^2', cls:[11] },
       { n:'Standard deviation', f:'σ = √(Σ(x_i − x̄)^2 / n)', cls:[11] },
+      { n:'Coefficient of variation', f:'CV = (σ / x̄) × 100', cls:[11] },
       { n:'Probability of an event', f:'P(E) = favourable outcomes / total outcomes', note:'0 ≤ P(E) ≤ 1.' },
       { n:'Complement', f:'P(not E) = 1 − P(E)' },
       { n:'Addition rule', f:'P(A ∪ B) = P(A) + P(B) − P(A ∩ B)', cls:[11] },
+      { n:'Mutually exclusive events', f:'P(A ∪ B) = P(A) + P(B)', cls:[11] },
+      { n:'Independent events', f:'P(A ∩ B) = P(A) × P(B)', cls:[12] },
       { n:'Conditional probability', f:'P(A | B) = P(A ∩ B) / P(B)', cls:[12] },
-      { n:"Bayes' theorem", f:'P(A_i | B) = P(A_i) P(B | A_i) / Σ P(A_j) P(B | A_j)', cls:[12] }
+      { n:'Multiplication theorem', f:'P(A ∩ B) = P(B) P(A | B)', cls:[12] },
+      { n:'Total probability', f:'P(B) = Σ P(A_i) P(B | A_i)', cls:[12] },
+      { n:"Bayes' theorem", f:'P(A_i | B) = P(A_i) P(B | A_i) / Σ P(A_j) P(B | A_j)', cls:[12] },
+      { n:'Binomial distribution', f:'P(X = r) = ^nC_r p^r q^{n−r}', v:[['q','1 − p']], cls:[12] },
+      { n:'Mean and variance of a binomial', f:'mean = np,   variance = npq', cls:[12] }
     ]},
-    { sub:'maths', ch:'Calculus — derivatives', cls:[11,12], items:[
-      { n:'Definition', f:'f′(x) = lim_{h→0} [f(x + h) − f(x)] / h' },
+    { sub:'maths', ch:'Matrices and determinants', cls:[12], items:[
+      { n:'Order of a matrix', f:'m × n', v:[['m','rows'],['n','columns']] },
+      { n:'Matrix multiplication', f:'(AB)_{ij} = Σ a_{ik} b_{kj}', note:'Defined only when columns of A = rows of B.' },
+      { n:'Transpose', f:'(AB)^T = B^T A^T' },
+      { n:'Symmetric / skew-symmetric', f:'A^T = A  ·  A^T = −A' },
+      { n:'Determinant of a 2×2', f:'|A| = ad − bc' },
+      { n:'Area of a triangle (determinant)', f:'A = ½ |x_1(y_2 − y_3) + x_2(y_3 − y_1) + x_3(y_1 − y_2)|' },
+      { n:'Adjoint and inverse', f:'A^{−1} = adj(A) / |A|', note:'Exists only if |A| ≠ 0.' },
+      { n:'Property of the adjoint', f:'A (adj A) = |A| I' },
+      { n:'Determinant of a product', f:'|AB| = |A| |B|' },
+      { n:'Determinant of an inverse', f:'|A^{−1}| = 1 / |A|' },
+      { n:"Cramer's rule", f:'x = D_1/D,   y = D_2/D,   z = D_3/D' }
+    ]},
+    { sub:'maths', ch:'Calculus — limits and derivatives', cls:[11,12], items:[
+      { n:'Definition of a derivative', f:'f′(x) = lim_{h→0} [f(x + h) − f(x)] / h' },
+      { n:'Standard limit — sine', f:'lim_{x→0} (sin x / x) = 1' },
+      { n:'Standard limit — polynomial', f:'lim_{x→a} (x^n − a^n)/(x − a) = n a^{n−1}' },
+      { n:'Standard limit — exponential', f:'lim_{x→0} (e^x − 1)/x = 1' },
+      { n:'Standard limit — logarithm', f:'lim_{x→0} log(1 + x)/x = 1' },
       { n:'Power rule', f:'d/dx (x^n) = n x^{n−1}' },
       { n:'Product rule', f:'(uv)′ = u′v + uv′' },
       { n:'Quotient rule', f:'(u/v)′ = (u′v − uv′) / v^2' },
       { n:'Chain rule', f:'dy/dx = (dy/du)(du/dx)' },
       { n:'Trig derivatives', f:'d/dx(sin x) = cos x,  d/dx(cos x) = −sin x,  d/dx(tan x) = sec^2 x' },
-      { n:'Exponential and log', f:'d/dx(e^x) = e^x,  d/dx(ln x) = 1/x,  d/dx(a^x) = a^x ln a' }
+      { n:'More trig derivatives', f:'d/dx(cot x) = −cosec^2 x,  d/dx(sec x) = sec x tan x,  d/dx(cosec x) = −cosec x cot x' },
+      { n:'Exponential and log', f:'d/dx(e^x) = e^x,  d/dx(ln x) = 1/x,  d/dx(a^x) = a^x ln a' },
+      { n:'Inverse trig derivatives', f:'d/dx(sin^{−1}x) = 1/√(1 − x^2),   d/dx(tan^{−1}x) = 1/(1 + x^2)', cls:[12] },
+      { n:'Continuity at a point', f:'lim_{x→a} f(x) = f(a)', cls:[12] },
+      { n:"Rolle's theorem", f:'f(a) = f(b)  ⟹  f′(c) = 0 for some c in (a, b)', cls:[12] },
+      { n:'Mean value theorem', f:'f′(c) = (f(b) − f(a)) / (b − a)', cls:[12] }
+    ]},
+    { sub:'maths', ch:'Applications of derivatives', cls:[12], items:[
+      { n:'Rate of change', f:'dy/dt = (dy/dx)(dx/dt)' },
+      { n:'Slope of a tangent', f:'m = dy/dx at (x_1, y_1)' },
+      { n:'Equation of a tangent', f:'y − y_1 = m(x − x_1)' },
+      { n:'Equation of a normal', f:'y − y_1 = (−1/m)(x − x_1)' },
+      { n:'Increasing / decreasing', f:"f′(x) > 0 increasing  ·  f′(x) < 0 decreasing" },
+      { n:'First derivative test', f:'f′(c) = 0 and f′ changes sign at c ⟹ local extremum' },
+      { n:'Second derivative test', f:'f″(c) > 0: minimum  ·  f″(c) < 0: maximum' },
+      { n:'Approximation', f:'f(x + Δx) ≈ f(x) + f′(x) Δx' }
     ]},
     { sub:'maths', ch:'Calculus — integrals', cls:[12], items:[
       { n:'Power rule', f:'∫ x^n dx = x^{n+1} / (n + 1) + C', note:'For n ≠ −1.' },
       { n:'Reciprocal', f:'∫ (1/x) dx = ln|x| + C' },
-      { n:'Exponential', f:'∫ e^x dx = e^x + C' },
+      { n:'Exponential', f:'∫ e^x dx = e^x + C,   ∫ a^x dx = a^x / ln a + C' },
       { n:'Trig integrals', f:'∫ sin x dx = −cos x + C,  ∫ cos x dx = sin x + C,  ∫ sec^2 x dx = tan x + C' },
+      { n:'More trig integrals', f:'∫ tan x dx = ln|sec x| + C,   ∫ cot x dx = ln|sin x| + C' },
+      { n:'Secant integral', f:'∫ sec x dx = ln|sec x + tan x| + C' },
+      { n:'Inverse trig results', f:'∫ dx/√(1 − x^2) = sin^{−1}x + C,   ∫ dx/(1 + x^2) = tan^{−1}x + C' },
+      { n:'Standard form', f:'∫ dx/(x^2 − a^2) = (1/2a) ln|(x − a)/(x + a)| + C' },
+      { n:'Standard form', f:'∫ dx/(x^2 + a^2) = (1/a) tan^{−1}(x/a) + C' },
+      { n:'Standard form', f:'∫ dx/√(x^2 + a^2) = ln|x + √(x^2 + a^2)| + C' },
       { n:'Integration by parts', f:'∫ u v dx = u ∫v dx − ∫ (u′ ∫v dx) dx', note:'Choose u by ILATE.' },
+      { n:'Special by-parts result', f:'∫ e^x [f(x) + f′(x)] dx = e^x f(x) + C' },
       { n:'Fundamental theorem', f:'∫_a^b f(x) dx = F(b) − F(a)' },
-      { n:'Area under a curve', f:'A = ∫_a^b y dx' }
+      { n:'Definite integral — reversal', f:'∫_a^b f(x) dx = −∫_b^a f(x) dx' },
+      { n:'Definite integral — king property', f:'∫_a^b f(x) dx = ∫_a^b f(a + b − x) dx' },
+      { n:'Even and odd functions', f:'∫_{−a}^{a} f(x) dx = 2∫_0^a f(x) dx if even, 0 if odd' },
+      { n:'Area under a curve', f:'A = ∫_a^b y dx' },
+      { n:'Area between two curves', f:'A = ∫_a^b (y_upper − y_lower) dx' }
+    ]},
+    { sub:'maths', ch:'Differential equations', cls:[12], items:[
+      { n:'Order and degree', f:'order = highest derivative  ·  degree = its power when the equation is polynomial in derivatives' },
+      { n:'Variables separable', f:'dy/dx = f(x) g(y)  ⟹  ∫ dy/g(y) = ∫ f(x) dx' },
+      { n:'Homogeneous equation', f:'dy/dx = F(y/x)', note:'Substitute y = vx.' },
+      { n:'Linear differential equation', f:'dy/dx + Py = Q' },
+      { n:'Integrating factor', f:'IF = e^{∫P dx}' },
+      { n:'Solution of a linear DE', f:'y × IF = ∫ (Q × IF) dx + C' }
     ]},
     { sub:'maths', ch:'Vectors and 3D geometry', cls:[12], items:[
       { n:'Magnitude', f:'|a⃗| = √(a_1^2 + a_2^2 + a_3^2)' },
+      { n:'Unit vector', f:'â = a⃗ / |a⃗|' },
       { n:'Dot product', f:'a⃗ · b⃗ = |a⃗||b⃗| cos θ = a_1b_1 + a_2b_2 + a_3b_3' },
+      { n:'Angle between vectors', f:'cos θ = (a⃗ · b⃗) / (|a⃗||b⃗|)' },
+      { n:'Projection', f:'projection of a⃗ on b⃗ = (a⃗ · b⃗) / |b⃗|' },
       { n:'Cross product magnitude', f:'|a⃗ × b⃗| = |a⃗||b⃗| sin θ' },
+      { n:'Area of a triangle (vectors)', f:'A = ½ |a⃗ × b⃗|' },
+      { n:'Area of a parallelogram', f:'A = |a⃗ × b⃗|' },
       { n:'Perpendicular test', f:'a⃗ · b⃗ = 0' },
+      { n:'Parallel test', f:'a⃗ × b⃗ = 0⃗' },
+      { n:'Scalar triple product', f:'[a⃗ b⃗ c⃗] = a⃗ · (b⃗ × c⃗)', note:'Zero if the three are coplanar.' },
       { n:'Distance between two points (3D)', f:'d = √((x_2−x_1)^2 + (y_2−y_1)^2 + (z_2−z_1)^2)' },
-      { n:'Direction cosines', f:'l^2 + m^2 + n^2 = 1' }
+      { n:'Direction cosines', f:'l^2 + m^2 + n^2 = 1' },
+      { n:'Line — vector form', f:'r⃗ = a⃗ + λ b⃗' },
+      { n:'Line — cartesian form', f:'(x − x_1)/a = (y − y_1)/b = (z − z_1)/c' },
+      { n:'Angle between two lines', f:'cos θ = |(b⃗_1 · b⃗_2)| / (|b⃗_1||b⃗_2|)' },
+      { n:'Plane — vector form', f:'r⃗ · n⃗ = d' },
+      { n:'Plane — cartesian form', f:'Ax + By + Cz + D = 0' },
+      { n:'Distance of a point from a plane', f:'d = |Ax_1 + By_1 + Cz_1 + D| / √(A^2 + B^2 + C^2)' },
+      { n:'Angle between two planes', f:'cos θ = |(n⃗_1 · n⃗_2)| / (|n⃗_1||n⃗_2|)' }
+    ]},
+    { sub:'maths', ch:'Linear programming', cls:[12], items:[
+      { n:'Objective function', f:'Z = ax + by', note:'Maximise or minimise this.' },
+      { n:'Corner point method', f:'evaluate Z at every corner of the feasible region', note:'The optimum always occurs at a corner.' }
     ]},
 
     /* ================= PHYSICS ================= */
-    { sub:'physics', ch:'Measurement and basics', cls:[6,7,8,9], items:[
+    { sub:'physics', ch:'Units and measurement', cls:[8,9,11], items:[
       { n:'Speed', f:'v = s / t', v:[['s','distance'],['t','time']] },
       { n:'Average speed', f:'v_avg = total distance / total time' },
       { n:'Velocity', f:'v⃗ = displacement / time', note:'Velocity has direction; speed does not.' },
       { n:'Acceleration', f:'a = (v − u) / t' },
       { n:'Density', f:'ρ = m / V' },
       { n:'Relative density', f:'RD = density of substance / density of water', note:'It has no unit.' },
-      { n:'Pressure', f:'P = F / A' },
-      { n:'Pressure in a liquid', f:'P = hρg' }
+      { n:'Percentage error', f:'% error = (Δa / a) × 100', cls:[11] },
+      { n:'Error in a sum or difference', f:'ΔZ = Δa + Δb', cls:[11] },
+      { n:'Error in a product or quotient', f:'ΔZ/Z = Δa/a + Δb/b', cls:[11] },
+      { n:'Error in a power', f:'Z = a^n  ⟹  ΔZ/Z = n(Δa/a)', cls:[11] }
     ]},
     { sub:'physics', ch:'Motion', cls:[9,11], items:[
       { n:'First equation of motion', f:'v = u + at' },
       { n:'Second equation of motion', f:'s = ut + ½at^2' },
       { n:'Third equation of motion', f:'v^2 = u^2 + 2as' },
       { n:'Distance in the nth second', f:'s_n = u + (a/2)(2n − 1)' },
+      { n:'Relative velocity', f:'v⃗_{AB} = v⃗_A − v⃗_B', cls:[11] },
       { n:'Projectile — time of flight', f:'T = 2u sin θ / g', cls:[11] },
       { n:'Projectile — maximum height', f:'H = u^2 sin^2 θ / 2g', cls:[11] },
       { n:'Projectile — range', f:'R = u^2 sin 2θ / g', note:'Range is maximum at θ = 45°.', cls:[11] },
-      { n:'Centripetal acceleration', f:'a_c = v^2 / r = ω^2 r', cls:[11] }
+      { n:'Projectile — path', f:'y = x tan θ − gx^2 / (2u^2 cos^2 θ)', note:'A parabola.', cls:[11] },
+      { n:'Angular velocity', f:'ω = θ / t = 2πn', cls:[11] },
+      { n:'Relation v and ω', f:'v = rω', cls:[11] },
+      { n:'Centripetal acceleration', f:'a_c = v^2 / r = ω^2 r', cls:[11] },
+      { n:'Centripetal force', f:'F_c = mv^2 / r', cls:[11] }
     ]},
-    { sub:'physics', ch:'Force, motion and momentum', cls:[9,11], items:[
+    { sub:'physics', ch:'Force, motion and momentum', cls:[8,9,11], items:[
       { n:"Newton's second law", f:'F = ma' },
       { n:'Momentum', f:'p = mv' },
       { n:'Force as rate of change of momentum', f:'F = Δp / Δt' },
       { n:'Impulse', f:'J = FΔt = Δp' },
       { n:'Conservation of momentum', f:'m_1u_1 + m_2u_2 = m_1v_1 + m_2v_2' },
       { n:'Friction', f:'f = μN', v:[['μ','coefficient of friction'],['N','normal reaction']], cls:[11] },
-      { n:'Torque', f:'τ = r F sin θ', cls:[11] },
-      { n:'Angular momentum', f:'L = Iω', cls:[11] }
+      { n:'Angle of repose', f:'tan θ = μ_s', cls:[11] },
+      { n:'Motion on a banked road', f:'tan θ = v^2 / rg', cls:[11] },
+      { n:'Torque', f:'τ = r F sin θ = Iα', cls:[11] },
+      { n:'Moment of inertia', f:'I = Σ m_i r_i^2', cls:[11] },
+      { n:'Angular momentum', f:'L = Iω = mvr', cls:[11] },
+      { n:'Conservation of angular momentum', f:'I_1ω_1 = I_2ω_2', cls:[11] },
+      { n:'Rotational kinetic energy', f:'KE_rot = ½ Iω^2', cls:[11] },
+      { n:'Rolling without slipping', f:'v = Rω,   KE = ½mv^2 (1 + I/mR^2)', cls:[11] },
+      { n:'Centre of mass', f:'x_cm = Σm_i x_i / Σm_i', cls:[11] },
+      { n:'Parallel axis theorem', f:'I = I_cm + Md^2', cls:[11] },
+      { n:'Perpendicular axis theorem', f:'I_z = I_x + I_y', note:'Planar bodies only.', cls:[11] }
     ]},
     { sub:'physics', ch:'Gravitation', cls:[9,11], items:[
       { n:'Universal law of gravitation', f:'F = G m_1 m_2 / r^2', v:[['G','6.674 × 10⁻¹¹ N m² kg⁻²']] },
       { n:'Acceleration due to gravity', f:'g = GM / R^2', note:'≈ 9.8 m s⁻² at Earth\u2019s surface.' },
       { n:'Weight', f:'W = mg' },
+      { n:'g at height h', f:'g_h = g (1 − 2h/R)', note:'For h ≪ R.', cls:[11] },
+      { n:'g at depth d', f:'g_d = g (1 − d/R)', note:'g is zero at the centre.', cls:[11] },
       { n:'Escape velocity', f:'v_e = √(2GM / R) = √(2gR)', note:'≈ 11.2 km s⁻¹ for Earth.', cls:[11] },
       { n:'Orbital velocity', f:'v_o = √(GM / r)', cls:[11] },
-      { n:'Gravitational potential energy', f:'U = −GMm / r', cls:[11] }
+      { n:'Relation between escape and orbital velocity', f:'v_e = √2 × v_o', cls:[11] },
+      { n:'Time period of a satellite', f:'T = 2π √(r^3 / GM)', cls:[11] },
+      { n:'Gravitational potential energy', f:'U = −GMm / r', cls:[11] },
+      { n:"Kepler's third law", f:'T^2 ∝ r^3', cls:[11] }
     ]},
     { sub:'physics', ch:'Work, energy and power', cls:[9,11], items:[
       { n:'Work', f:'W = F s cos θ' },
@@ -338,48 +567,96 @@ window.STUDY = {
       { n:'Work–energy theorem', f:'W_net = ΔKE', cls:[11] },
       { n:'Power', f:'P = W / t = F v' },
       { n:'Relation between KE and momentum', f:'KE = p^2 / 2m', cls:[11] },
+      { n:'Elastic potential energy of a spring', f:'U = ½ k x^2', cls:[11] },
+      { n:'Elastic collision (1D)', f:'v_1 = ((m_1−m_2)u_1 + 2m_2u_2)/(m_1+m_2)', cls:[11] },
+      { n:'Coefficient of restitution', f:'e = (v_2 − v_1) / (u_1 − u_2)', note:'e = 1 perfectly elastic, e = 0 perfectly inelastic.', cls:[11] },
       { n:'Efficiency', f:'η = (useful output / total input) × 100%' }
     ]},
-    { sub:'physics', ch:'Fluids and elasticity', cls:[9,11], items:[
+    { sub:'physics', ch:'Pressure, fluids and elasticity', cls:[8,9,11], items:[
+      { n:'Pressure', f:'P = F / A' },
+      { n:'Pressure in a liquid', f:'P = hρg' },
+      { n:'Absolute pressure', f:'P = P_0 + hρg', cls:[11] },
       { n:"Archimedes' principle", f:'Upthrust = weight of fluid displaced' },
       { n:'Buoyant force', f:'F_b = V ρ g' },
+      { n:"Pascal's law", f:'F_1 / A_1 = F_2 / A_2', cls:[11] },
       { n:'Stress', f:'σ = F / A', cls:[11] },
       { n:'Strain', f:'ε = ΔL / L', cls:[11] },
       { n:"Young's modulus", f:'Y = stress / strain = FL / AΔL', cls:[11] },
+      { n:'Bulk modulus', f:'B = −P / (ΔV/V)', cls:[11] },
+      { n:'Elastic potential energy per unit volume', f:'u = ½ × stress × strain', cls:[11] },
       { n:'Equation of continuity', f:'A_1v_1 = A_2v_2', cls:[11] },
-      { n:"Bernoulli's principle", f:'P + ½ρv^2 + ρgh = constant', cls:[11] }
+      { n:"Bernoulli's principle", f:'P + ½ρv^2 + ρgh = constant', cls:[11] },
+      { n:"Stokes' law", f:'F = 6πηrv', cls:[11] },
+      { n:'Terminal velocity', f:'v_t = 2r^2(ρ − σ)g / 9η', cls:[11] },
+      { n:'Surface tension', f:'T = F / l', cls:[11] },
+      { n:'Capillary rise', f:'h = 2T cos θ / rρg', cls:[11] },
+      { n:"Reynolds number", f:'R_e = ρvD / η', note:'< 2000 laminar, > 3000 turbulent.', cls:[11] }
     ]},
     { sub:'physics', ch:'Heat and thermodynamics', cls:[11], items:[
       { n:'Heat gained or lost', f:'Q = mcΔT', v:[['c','specific heat capacity']] },
       { n:'Latent heat', f:'Q = mL' },
       { n:'Linear expansion', f:'ΔL = L α ΔT' },
-      { n:'First law of thermodynamics', f:'ΔU = Q − W' },
+      { n:'Area and volume expansion', f:'β = 2α,   γ = 3α' },
+      { n:'Conduction', f:'Q/t = kA(T_1 − T_2) / L' },
+      { n:"Stefan-Boltzmann law", f:'E = σ T^4', v:[['σ','5.67 × 10⁻⁸ W m⁻² K⁻⁴']] },
+      { n:"Wien's displacement law", f:'λ_m T = b', v:[['b','2.9 × 10⁻³ m K']] },
+      { n:'First law of thermodynamics', f:'ΔQ = ΔU + ΔW' },
+      { n:'Work done by a gas', f:'W = ∫ P dV' },
+      { n:'Isothermal work', f:'W = nRT ln(V_2 / V_1)' },
+      { n:'Adiabatic relation', f:'PV^γ = constant' },
+      { n:'Adiabatic work', f:'W = (P_1V_1 − P_2V_2) / (γ − 1)' },
+      { n:'Mayer relation', f:'C_p − C_v = R' },
+      { n:'Ratio of specific heats', f:'γ = C_p / C_v' },
+      { n:'Efficiency of a heat engine', f:'η = 1 − T_2 / T_1' },
+      { n:'Coefficient of performance', f:'COP = T_2 / (T_1 − T_2)' },
       { n:'Ideal gas equation', f:'PV = nRT', v:[['R','8.314 J mol⁻¹ K⁻¹']] },
-      { n:'RMS speed of gas molecules', f:'v_rms = √(3RT / M)' },
-      { n:'Efficiency of a heat engine', f:'η = 1 − T_2 / T_1' }
+      { n:'RMS speed of gas molecules', f:'v_rms = √(3RT / M) = √(3P/ρ)' },
+      { n:'Average and most probable speed', f:'v_avg = √(8RT/πM),   v_mp = √(2RT/M)' },
+      { n:'Kinetic energy of a molecule', f:'KE = (3/2) k_B T', v:[['k_B','1.38 × 10⁻²³ J K⁻¹']] },
+      { n:'Degrees of freedom', f:'U = (f/2) nRT' }
     ]},
-    { sub:'physics', ch:'Oscillations and waves', cls:[9,11], items:[
+    { sub:'physics', ch:'Oscillations and waves', cls:[8,9,11], items:[
       { n:'Wave equation', f:'v = f λ' },
       { n:'Frequency and time period', f:'f = 1 / T' },
       { n:'Echo — distance', f:'2d = v × t' },
       { n:'SHM — displacement', f:'x = A sin(ωt + φ)', cls:[11] },
+      { n:'SHM — velocity', f:'v = ω√(A^2 − x^2)', cls:[11] },
+      { n:'SHM — acceleration', f:'a = −ω^2 x', cls:[11] },
+      { n:'SHM — energy', f:'E = ½ m ω^2 A^2', cls:[11] },
       { n:'Time period of a simple pendulum', f:'T = 2π √(L / g)', cls:[11] },
       { n:'Time period of a spring', f:'T = 2π √(m / k)', cls:[11] },
-      { n:'Beat frequency', f:'f_beat = |f_1 − f_2|', cls:[11] }
+      { n:'Springs in series and parallel', f:'series: 1/k = 1/k_1 + 1/k_2   ·   parallel: k = k_1 + k_2', cls:[11] },
+      { n:'Speed of a wave on a string', f:'v = √(T / μ)', v:[['μ','mass per unit length']], cls:[11] },
+      { n:'Speed of sound in a gas', f:'v = √(γP / ρ)', cls:[11] },
+      { n:'Standing wave — string', f:'f_n = (n/2L) √(T/μ)', cls:[11] },
+      { n:'Open organ pipe', f:'f_n = n v / 2L', note:'All harmonics present.', cls:[11] },
+      { n:'Closed organ pipe', f:'f_n = (2n − 1) v / 4L', note:'Only odd harmonics.', cls:[11] },
+      { n:'Beat frequency', f:'f_beat = |f_1 − f_2|', cls:[11] },
+      { n:'Doppler effect', f:'f′ = f (v ± v_o) / (v ∓ v_s)', cls:[11] }
     ]},
-    { sub:'physics', ch:'Light and optics', cls:[10,12], items:[
+    { sub:'physics', ch:'Light and optics', cls:[8,10,12], items:[
       { n:'Mirror formula', f:'1/v + 1/u = 1/f' },
       { n:'Magnification (mirror)', f:'m = −v / u = h′ / h' },
       { n:'Focal length of a spherical mirror', f:'f = R / 2' },
       { n:'Lens formula', f:'1/v − 1/u = 1/f' },
-      { n:'Magnification (lens)', f:'m = v / u' },
+      { n:'Magnification (lens)', f:'m = v / u = h′ / h' },
       { n:'Power of a lens', f:'P = 1 / f', note:'f in metres; P in dioptres (D).' },
       { n:'Refractive index', f:'n = c / v = sin i / sin r' },
       { n:"Snell's law", f:'n_1 sin i = n_2 sin r' },
       { n:'Critical angle', f:'sin C = 1 / n' },
       { n:'Lens maker formula', f:'1/f = (n − 1)(1/R_1 − 1/R_2)', cls:[12] },
-      { n:'Lenses in contact', f:'1/F = 1/f_1 + 1/f_2', cls:[12] },
-      { n:"Young's double slit — fringe width", f:'β = λD / d', cls:[12] }
+      { n:'Lenses in contact', f:'1/F = 1/f_1 + 1/f_2,   P = P_1 + P_2', cls:[12] },
+      { n:'Prism — deviation', f:'δ = i + e − A', cls:[12] },
+      { n:'Prism formula', f:'n = sin((A + δ_m)/2) / sin(A/2)', cls:[12] },
+      { n:'Simple microscope', f:'M = 1 + D/f', v:[['D','25 cm']], cls:[12] },
+      { n:'Compound microscope', f:'M = (L/f_o)(1 + D/f_e)', cls:[12] },
+      { n:'Telescope', f:'M = f_o / f_e', cls:[12] },
+      { n:"Young's double slit — fringe width", f:'β = λD / d', cls:[12] },
+      { n:'Constructive interference', f:'path difference = nλ', cls:[12] },
+      { n:'Destructive interference', f:'path difference = (2n − 1)λ/2', cls:[12] },
+      { n:'Single slit — first minimum', f:'a sin θ = λ', cls:[12] },
+      { n:"Brewster's law", f:'tan i_p = n', cls:[12] },
+      { n:'Resolving power of a microscope', f:'R = 2μ sin θ / 1.22λ', cls:[12] }
     ]},
     { sub:'physics', ch:'Electricity', cls:[10,12], items:[
       { n:'Electric current', f:'I = Q / t' },
@@ -392,36 +669,86 @@ window.STUDY = {
       { n:'Electrical energy', f:'E = P × t', note:'1 kWh = 3.6 × 10⁶ J.' },
       { n:"Coulomb's law", f:'F = k q_1 q_2 / r^2', v:[['k','9 × 10⁹ N m² C⁻²']], cls:[12] },
       { n:'Electric field', f:'E = F / q = kq / r^2', cls:[12] },
+      { n:'Electric dipole moment', f:'p = q × 2a', cls:[12] },
+      { n:'Torque on a dipole', f:'τ = pE sin θ', cls:[12] },
+      { n:"Gauss's law", f:'Φ = q_enc / ε_0', cls:[12] },
+      { n:'Field of an infinite wire', f:'E = λ / (2πε_0 r)', cls:[12] },
+      { n:'Field of a charged sheet', f:'E = σ / (2ε_0)', cls:[12] },
       { n:'Electric potential', f:'V = W / q = kq / r', cls:[12] },
+      { n:'Potential energy of two charges', f:'U = k q_1 q_2 / r', cls:[12] },
+      { n:'Relation between E and V', f:'E = −dV / dr', cls:[12] },
       { n:'Capacitance', f:'C = Q / V', cls:[12] },
-      { n:'Energy stored in a capacitor', f:'U = ½ CV^2', cls:[12] }
+      { n:'Parallel plate capacitor', f:'C = ε_0 A / d', cls:[12] },
+      { n:'With a dielectric', f:'C = K ε_0 A / d', cls:[12] },
+      { n:'Capacitors in series and parallel', f:'series: 1/C = 1/C_1 + 1/C_2   ·   parallel: C = C_1 + C_2', cls:[12] },
+      { n:'Energy stored in a capacitor', f:'U = ½ CV^2 = Q^2 / 2C', cls:[12] },
+      { n:'Drift velocity', f:'v_d = I / (nAe)', cls:[12] },
+      { n:'Current density', f:'J = I / A = σE', cls:[12] },
+      { n:'EMF and internal resistance', f:'ε = V + Ir', cls:[12] },
+      { n:"Kirchhoff's junction rule", f:'ΣI_in = ΣI_out', cls:[12] },
+      { n:"Kirchhoff's loop rule", f:'ΣV = 0 around any closed loop', cls:[12] },
+      { n:'Wheatstone bridge (balanced)', f:'P/Q = R/S', cls:[12] },
+      { n:'Resistance and temperature', f:'R_t = R_0 (1 + αΔT)', cls:[12] }
     ]},
     { sub:'physics', ch:'Magnetism and EMI', cls:[10,12], items:[
       { n:'Force on a current-carrying conductor', f:'F = BIL sin θ' },
       { n:'Force on a moving charge', f:'F = qvB sin θ', cls:[12] },
-      { n:"Faraday's law of induction", f:'ε = −N dΦ / dt', cls:[12] },
+      { n:'Biot–Savart law', f:'dB = (μ_0 / 4π) I dl sin θ / r^2', cls:[12] },
+      { n:'Field of a long straight wire', f:'B = μ_0 I / (2πr)', cls:[12] },
+      { n:'Field at the centre of a loop', f:'B = μ_0 I / (2R)', cls:[12] },
+      { n:'Field inside a solenoid', f:'B = μ_0 n I', cls:[12] },
+      { n:"Ampere's circuital law", f:'∮ B⃗ · dl⃗ = μ_0 I', cls:[12] },
+      { n:'Radius in a magnetic field', f:'r = mv / qB', cls:[12] },
+      { n:'Cyclotron frequency', f:'f = qB / 2πm', cls:[12] },
+      { n:'Force between parallel wires', f:'F/L = μ_0 I_1 I_2 / (2πd)', cls:[12] },
       { n:'Magnetic flux', f:'Φ = BA cos θ', cls:[12] },
-      { n:'Transformer relation', f:'V_s / V_p = N_s / N_p', cls:[12] },
+      { n:"Faraday's law of induction", f:'ε = −N dΦ / dt', cls:[12] },
+      { n:'Motional EMF', f:'ε = Blv', cls:[12] },
+      { n:'Self inductance', f:'ε = −L dI/dt,   energy = ½LI^2', cls:[12] },
+      { n:'Mutual inductance', f:'ε_2 = −M dI_1/dt', cls:[12] },
+      { n:'Transformer relation', f:'V_s / V_p = N_s / N_p = I_p / I_s', cls:[12] },
+      { n:'RMS values', f:'I_rms = I_0 / √2,   V_rms = V_0 / √2', cls:[12] },
+      { n:'Inductive and capacitive reactance', f:'X_L = ωL,   X_C = 1 / ωC', cls:[12] },
+      { n:'Impedance', f:'Z = √(R^2 + (X_L − X_C)^2)', cls:[12] },
+      { n:'Resonant frequency', f:'f_r = 1 / (2π√(LC))', cls:[12] },
+      { n:'Power factor', f:'cos φ = R / Z', cls:[12] },
+      { n:'Quality factor', f:'Q = (1/R)√(L/C)', cls:[12] },
       { n:'Speed of light from constants', f:'c = 1 / √(μ_0 ε_0)', cls:[12] }
     ]},
     { sub:'physics', ch:'Modern physics', cls:[12], items:[
       { n:'Energy of a photon', f:'E = hν = hc / λ', v:[['h','6.626 × 10⁻³⁴ J s']] },
+      { n:'Momentum of a photon', f:'p = h / λ = E / c' },
       { n:'Photoelectric equation', f:'hν = φ + KE_max' },
+      { n:'Threshold frequency', f:'φ = hν_0' },
+      { n:'Stopping potential', f:'eV_0 = KE_max' },
       { n:'de Broglie wavelength', f:'λ = h / p = h / mv' },
+      { n:'de Broglie for an accelerated electron', f:'λ = 12.27 / √V  Å' },
       { n:'Mass–energy equivalence', f:'E = mc^2' },
       { n:'Bohr radius', f:'r_n = 0.529 n^2 / Z  Å' },
       { n:'Energy of hydrogen levels', f:'E_n = −13.6 / n^2  eV' },
+      { n:'Bohr angular momentum', f:'mvr = nh / 2π' },
+      { n:'Rydberg formula', f:'1/λ = R(1/n_1^2 − 1/n_2^2)', v:[['R','1.097 × 10⁷ m⁻¹']] },
+      { n:'Nuclear radius', f:'R = R_0 A^{1/3}', v:[['R_0','1.2 × 10⁻¹⁵ m']] },
+      { n:'Mass defect', f:'Δm = Zm_p + (A − Z)m_n − M' },
+      { n:'Binding energy', f:'BE = Δm × 931.5  MeV' },
       { n:'Radioactive decay law', f:'N = N_0 e^{−λt}' },
-      { n:'Half-life', f:'t_{1/2} = 0.693 / λ' }
+      { n:'Half-life', f:'t_{1/2} = 0.693 / λ' },
+      { n:'Mean life', f:'τ = 1 / λ = t_{1/2} / 0.693' },
+      { n:'Activity', f:'A = λN' },
+      { n:'Transistor current', f:'I_E = I_B + I_C', cls:[12] },
+      { n:'Current gain', f:'β = I_C / I_B,   α = I_C / I_E', cls:[12] },
+      { n:'Relation between α and β', f:'β = α / (1 − α)', cls:[12] }
     ]},
 
     /* ================= CHEMISTRY ================= */
     { sub:'chemistry', ch:'Mole concept', cls:[9,11], items:[
       { n:'Number of moles from mass', f:'n = m / M', v:[['m','given mass (g)'],['M','molar mass (g mol⁻¹)']] },
       { n:'Number of particles', f:'N = n × N_A', v:[['N_A','6.022 × 10²³ mol⁻¹']] },
-      { n:'Molar volume at STP', f:'V = n × 22.4 L', note:'At 273 K and 1 atm.' },
+      { n:'Molar volume at STP', f:'V = n × 22.4 L', note:'At 273 K and 1 bar (22.7 L).' },
       { n:'Percentage composition', f:'% element = (mass of element / molar mass) × 100' },
-      { n:'Molecular formula', f:'Molecular formula = n × Empirical formula', v:[['n','molar mass ÷ empirical formula mass']], cls:[11] }
+      { n:'Empirical formula', f:'divide each % by atomic mass, then by the smallest ratio', cls:[11] },
+      { n:'Molecular formula', f:'Molecular formula = n × Empirical formula', v:[['n','molar mass ÷ empirical formula mass']], cls:[11] },
+      { n:'Number of moles from volume', f:'n = V / 22.4', note:'Gases at STP.' }
     ]},
     { sub:'chemistry', ch:'Gas laws', cls:[9,11], items:[
       { n:"Boyle's law", f:'P_1V_1 = P_2V_2', note:'At constant temperature.' },
@@ -429,8 +756,25 @@ window.STUDY = {
       { n:'Gay-Lussac law', f:'P_1 / T_1 = P_2 / T_2', note:'At constant volume.' },
       { n:'Combined gas law', f:'P_1V_1 / T_1 = P_2V_2 / T_2' },
       { n:'Ideal gas equation', f:'PV = nRT' },
+      { n:"Avogadro's law", f:'V ∝ n', note:'At the same T and P.' },
       { n:"Dalton's law of partial pressures", f:'P_total = P_1 + P_2 + P_3 + …', cls:[11] },
+      { n:'Partial pressure from mole fraction', f:'P_i = x_i P_total', cls:[11] },
+      { n:"Graham's law of diffusion", f:'r_1 / r_2 = √(M_2 / M_1)', cls:[11] },
+      { n:'van der Waals equation', f:'(P + an^2/V^2)(V − nb) = nRT', cls:[11] },
       { n:'Kelvin conversion', f:'K = °C + 273.15' }
+    ]},
+    { sub:'chemistry', ch:'Atomic structure', cls:[9,11], items:[
+      { n:'Atomic number', f:'Z = number of protons' },
+      { n:'Mass number', f:'A = protons + neutrons' },
+      { n:'Number of neutrons', f:'n = A − Z' },
+      { n:'Maximum electrons in a shell', f:'2n^2', v:[['n','shell number']] },
+      { n:'Maximum electrons in a subshell', f:'2(2l + 1)', cls:[11] },
+      { n:'Number of orbitals in a shell', f:'n^2', cls:[11] },
+      { n:'Rydberg formula', f:'1/λ = R(1/n_1^2 − 1/n_2^2)', v:[['R','1.097 × 10⁷ m⁻¹']], cls:[11] },
+      { n:'Energy of hydrogen levels', f:'E_n = −13.6 / n^2  eV', cls:[11] },
+      { n:'de Broglie relation', f:'λ = h / mv', cls:[11] },
+      { n:'Heisenberg uncertainty principle', f:'Δx × Δp ≥ h / 4π', cls:[11] },
+      { n:'Aufbau order', f:'1s 2s 2p 3s 3p 4s 3d 4p 5s 4d 5p 6s 4f 5d 6p 7s', note:'Fill lowest (n + l) first.', cls:[11] }
     ]},
     { sub:'chemistry', ch:'Acids, bases and salts', cls:[10,11], items:[
       { n:'pH', f:'pH = −log[H^+]' },
@@ -438,43 +782,155 @@ window.STUDY = {
       { n:'Relation between pH and pOH', f:'pH + pOH = 14', note:'At 25 °C.' },
       { n:'Ionic product of water', f:'K_w = [H^+][OH^−] = 10^{−14}', note:'At 25 °C.' },
       { n:'Neutral, acidic, basic', f:'pH = 7 neutral  ·  pH < 7 acidic  ·  pH > 7 basic' },
-      { n:'Dilution', f:'M_1V_1 = M_2V_2' }
+      { n:'Dilution', f:'M_1V_1 = M_2V_2' },
+      { n:'Acid dissociation constant', f:'K_a = [H^+][A^−] / [HA]', cls:[11] },
+      { n:'pKa and pKb', f:'pK_a = −log K_a,   pK_a + pK_b = 14', cls:[11] },
+      { n:'Henderson equation', f:'pH = pK_a + log([salt] / [acid])', cls:[11] },
+      { n:'Degree of dissociation', f:'α = √(K_a / C)', cls:[11] },
+      { n:'Solubility product', f:'K_sp = [A^+]^x [B^−]^y', cls:[11] }
     ]},
-    { sub:'chemistry', ch:'Solutions', cls:[11,12], items:[
+    { sub:'chemistry', ch:'Solutions', cls:[9,11,12], items:[
+      { n:'Mass percentage', f:'% = (mass of solute / mass of solution) × 100' },
+      { n:'Volume percentage', f:'% = (volume of solute / volume of solution) × 100' },
       { n:'Molarity', f:'M = moles of solute / volume of solution (L)' },
       { n:'Molality', f:'m = moles of solute / mass of solvent (kg)' },
-      { n:'Mole fraction', f:'x_A = n_A / (n_A + n_B)' },
-      { n:'Mass percentage', f:'% = (mass of solute / mass of solution) × 100' },
+      { n:'Normality', f:'N = gram equivalents / volume (L)' },
+      { n:'Mole fraction', f:'x_A = n_A / (n_A + n_B)', note:'x_A + x_B = 1.' },
+      { n:'ppm', f:'ppm = (mass of solute / mass of solution) × 10^6' },
       { n:"Raoult's law", f:'P = P_A^0 x_A + P_B^0 x_B', cls:[12] },
+      { n:'Relative lowering of vapour pressure', f:'(P^0 − P) / P^0 = x_B', cls:[12] },
       { n:'Elevation of boiling point', f:'ΔT_b = K_b m', cls:[12] },
       { n:'Depression of freezing point', f:'ΔT_f = K_f m', cls:[12] },
-      { n:'Osmotic pressure', f:'π = CRT', cls:[12] }
+      { n:'Osmotic pressure', f:'π = CRT', cls:[12] },
+      { n:"van't Hoff factor", f:'i = observed colligative property / calculated', cls:[12] },
+      { n:'Colligative property with i', f:'ΔT_b = i K_b m', cls:[12] }
     ]},
     { sub:'chemistry', ch:'Thermodynamics and equilibrium', cls:[11], items:[
       { n:'First law', f:'ΔU = q + w' },
+      { n:'Work of expansion', f:'w = −P_ext ΔV' },
       { n:'Enthalpy', f:'H = U + PV' },
       { n:'Enthalpy change', f:'ΔH = ΔU + Δn_g RT' },
+      { n:"Hess's law", f:'ΔH is the same whatever the route' },
+      { n:'Heat capacity relation', f:'C_p − C_v = R' },
+      { n:'Entropy change', f:'ΔS = q_rev / T' },
       { n:'Gibbs free energy', f:'ΔG = ΔH − TΔS', note:'ΔG < 0 means spontaneous.' },
+      { n:'Gibbs energy and equilibrium', f:'ΔG° = −RT ln K' },
       { n:'Equilibrium constant', f:'K_c = [products] / [reactants]', note:'Each raised to its stoichiometric coefficient.' },
-      { n:'Relation between Kp and Kc', f:'K_p = K_c (RT)^{Δn}' }
+      { n:'Relation between Kp and Kc', f:'K_p = K_c (RT)^{Δn}' },
+      { n:'Reaction quotient', f:'Q < K forward  ·  Q = K equilibrium  ·  Q > K backward' }
     ]},
     { sub:'chemistry', ch:'Electrochemistry and kinetics', cls:[12], items:[
       { n:'Gibbs energy and cell potential', f:'ΔG° = −nFE°_cell', v:[['F','96500 C mol⁻¹']] },
+      { n:'Standard cell potential', f:'E°_cell = E°_cathode − E°_anode' },
       { n:'Nernst equation', f:'E = E° − (0.059/n) log Q', note:'At 298 K.' },
-      { n:"Faraday's first law", f:'m = ZIt' },
+      { n:'Equilibrium constant from E°', f:'log K = nE° / 0.059' },
+      { n:"Faraday's first law", f:'m = ZIt', v:[['Z','equivalent weight / 96500']] },
       { n:'Conductivity', f:'κ = G × (l / A)' },
+      { n:'Molar conductivity', f:'Λ_m = κ × 1000 / M' },
+      { n:"Kohlrausch's law", f:'Λ°_m = ν_+ λ°_+ + ν_− λ°_−' },
       { n:'Rate of reaction', f:'rate = −Δ[R] / Δt = +Δ[P] / Δt' },
+      { n:'Rate law', f:'rate = k [A]^x [B]^y', v:[['x + y','order of reaction']] },
+      { n:'Zero-order integrated law', f:'[R] = [R]_0 − kt' },
       { n:'First-order rate constant', f:'k = (2.303 / t) log([R]_0 / [R])' },
+      { n:'Half-life (zero order)', f:'t_{1/2} = [R]_0 / 2k' },
       { n:'Half-life (first order)', f:'t_{1/2} = 0.693 / k' },
-      { n:'Arrhenius equation', f:'k = A e^{−E_a / RT}' }
+      { n:'Arrhenius equation', f:'k = A e^{−E_a / RT}' },
+      { n:'Arrhenius — two temperatures', f:'log(k_2/k_1) = (E_a / 2.303R)(1/T_1 − 1/T_2)' }
     ]},
-    { sub:'chemistry', ch:'Atomic structure', cls:[9,11], items:[
-      { n:'Atomic number', f:'Z = number of protons' },
-      { n:'Mass number', f:'A = protons + neutrons' },
-      { n:'Number of neutrons', f:'n = A − Z' },
-      { n:'Maximum electrons in a shell', f:'2n^2', v:[['n','shell number']] },
-      { n:'Rydberg formula', f:'1/λ = R(1/n_1^2 − 1/n_2^2)', v:[['R','1.097 × 10⁷ m⁻¹']], cls:[11] },
-      { n:'Number of orbitals in a subshell', f:'2l + 1', cls:[11] }
+    { sub:'chemistry', ch:'Organic chemistry basics', cls:[10,11,12], items:[
+      { n:'General formula — alkanes', f:'C_nH_{2n+2}', note:'Saturated; single bonds.' },
+      { n:'General formula — alkenes', f:'C_nH_{2n}', note:'One double bond.' },
+      { n:'General formula — alkynes', f:'C_nH_{2n−2}', note:'One triple bond.' },
+      { n:'General formula — alcohols', f:'C_nH_{2n+1}OH' },
+      { n:'General formula — aldehydes', f:'C_nH_{2n}O', note:'−CHO group.' },
+      { n:'General formula — ketones', f:'C_nH_{2n}O', note:'>C=O within the chain.' },
+      { n:'General formula — carboxylic acids', f:'C_nH_{2n}O_2', note:'−COOH group.' },
+      { n:'Degree of unsaturation', f:'DoU = (2C + 2 + N − H − X) / 2', cls:[11] },
+      { n:'Combustion of an alkane', f:'C_nH_{2n+2} + ((3n+1)/2) O_2 → n CO_2 + (n+1) H_2O' },
+      { n:'Esterification', f:'acid + alcohol ⇌ ester + water', note:'Conc. H₂SO₄ as catalyst.' },
+      { n:'Saponification', f:'ester + NaOH → soap + alcohol' }
+    ]}
+  ],
+
+  /* ---- revision notes ----
+     Condensed "night before the test" points, not full explanations. */
+  revision: [
+    { sub:'physics', ch:'Motion', cls:[9], points:[
+      'Distance is total path length (scalar, never negative). Displacement is the shortest straight line from start to finish (vector, can be zero).',
+      'Uniform motion = equal distances in equal intervals. Uniform acceleration = equal changes in velocity in equal intervals.',
+      'The three equations of motion only apply when acceleration is CONSTANT.',
+      'Distance–time graph: slope = speed. Velocity–time graph: slope = acceleration, area under it = displacement.',
+      'In free fall, a = g = 9.8 m/s² downwards. Going up, take g as negative; at the top v = 0 but a is still g.'
+    ]},
+    { sub:'physics', ch:'Force and laws of motion', cls:[9], points:[
+      'First law (inertia): a body stays at rest or in uniform motion unless a net external force acts. Mass measures inertia.',
+      'Second law: F = ma, or more generally F = Δp/Δt.',
+      'Third law: action and reaction are equal, opposite, and act on DIFFERENT bodies — which is why they never cancel.',
+      'Momentum is conserved in every collision, in the absence of external force. Kinetic energy is only conserved in elastic ones.',
+      'Common trap: "the ball stops so momentum vanished." It was transferred, not destroyed.'
+    ]},
+    { sub:'physics', ch:'Light — reflection and refraction', cls:[10], points:[
+      'Sign convention: distances are measured from the pole, along the incident light positive, against it negative. Heights above the axis are positive.',
+      'Concave mirror and convex lens converge; convex mirror and concave lens diverge.',
+      'A real image is inverted and can be caught on a screen. A virtual image is erect and cannot.',
+      'For a mirror, m = −v/u. For a lens, m = v/u. The sign difference is a classic marks-loser.',
+      'Refractive index n = c/v. Light bends towards the normal entering a denser medium, away from it leaving one.',
+      'Total internal reflection needs light going dense → rare AND angle of incidence > critical angle.'
+    ]},
+    { sub:'physics', ch:'Electricity', cls:[10], points:[
+      'Series: same current everywhere, voltages add, resistances add. Parallel: same voltage across each, currents add, reciprocals of resistance add.',
+      'Total resistance in parallel is always SMALLER than the smallest branch. Use it to sanity-check your answer.',
+      'Resistance rises with length, falls with thicker area: R = ρl/A.',
+      'Heating H = I²Rt. This is why fuses and heaters use thin, high-resistance wire.',
+      '1 unit of electricity = 1 kWh = 3.6 × 10⁶ J.'
+    ]},
+    { sub:'chemistry', ch:'Chemical reactions and equations', cls:[10], points:[
+      'Balance by mass: atoms of each element must be equal on both sides. Never change a formula to balance — only coefficients.',
+      'Types: combination, decomposition, displacement, double displacement, oxidation–reduction.',
+      'Oxidation = gain of oxygen / loss of hydrogen / loss of electrons. Reduction is the opposite. OIL RIG: Oxidation Is Loss, Reduction Is Gain.',
+      'A more reactive metal displaces a less reactive one from its salt solution.',
+      'Corrosion and rancidity are both oxidation; antioxidants and nitrogen flushing prevent rancidity.'
+    ]},
+    { sub:'chemistry', ch:'Acids, bases and salts', cls:[10], points:[
+      'Acids give H⁺ in water; bases give OH⁻. Acids turn blue litmus red; bases turn red litmus blue.',
+      'Acid + base → salt + water (neutralisation). Acid + metal → salt + hydrogen. Acid + carbonate → salt + water + CO₂.',
+      'pH < 7 acidic, = 7 neutral, > 7 basic. Each pH unit is a TENFOLD change in [H⁺].',
+      'Always add acid to water, never water to acid — the reaction is strongly exothermic.',
+      'Know the common four: washing soda Na₂CO₃·10H₂O, baking soda NaHCO₃, bleaching powder CaOCl₂, plaster of Paris CaSO₄·½H₂O.'
+    ]},
+    { sub:'chemistry', ch:'Mole concept', cls:[9,11], points:[
+      'One mole = 6.022 × 10²³ particles = the molar mass in grams = 22.4 L for a gas at STP.',
+      'Moles is the bridge: mass → moles → particles, or mass → moles → volume. Never jump straight from grams to litres.',
+      'Empirical formula gives the simplest ratio; molecular formula is a whole-number multiple of it.',
+      'Law of conservation of mass: total mass of reactants = total mass of products.',
+      'Limiting reagent decides how much product forms — it is the one that runs out first, not the one with less mass.'
+    ]},
+    { sub:'maths', ch:'Trigonometry', cls:[10], points:[
+      'sin and cos are never greater than 1 in magnitude. If your answer says sin θ = 1.4, you have made a mistake.',
+      'Memorise the table for 0°, 30°, 45°, 60°, 90° — sin goes 0, ½, 1/√2, √3/2, 1 and cos is the same list reversed.',
+      'Every identity comes from sin²θ + cos²θ = 1. Divide it by cos²θ to get 1 + tan²θ = sec²θ; by sin²θ to get 1 + cot²θ = cosec²θ.',
+      'In heights and distances, draw the diagram FIRST. Angle of elevation is measured up from the horizontal, depression down from it.',
+      'A tangent is horizontal at 45° — a common shortcut: if the angle is 45°, height = base.'
+    ]},
+    { sub:'maths', ch:'Quadratic equations', cls:[10], points:[
+      'Always write in standard form ax² + bx + c = 0 before doing anything else.',
+      'D = b² − 4ac decides everything: D > 0 two roots, D = 0 one repeated root, D < 0 no real roots.',
+      'Sum of roots = −b/a, product = c/a. Use this to check your answers in seconds.',
+      'For word problems, the negative root is usually rejected — you cannot have negative age, length or speed. Say so explicitly for the mark.'
+    ]},
+    { sub:'maths', ch:'Arithmetic progressions', cls:[10], points:[
+      'Check it really is an AP: the difference between consecutive terms must be the same throughout.',
+      'aₙ = a + (n−1)d is for a single term. Sₙ = (n/2)[2a + (n−1)d] is for the total. Do not mix them up.',
+      'If you know the last term, Sₙ = (n/2)(a + l) is far quicker.',
+      'The nth term from the END of an AP is l − (n−1)d.',
+      'If three terms are in AP, take them as a − d, a, a + d — the algebra collapses beautifully.'
+    ]},
+    { sub:'maths', ch:'Mensuration', cls:[9,10], points:[
+      'Curved surface area excludes the flat ends; total surface area includes them. Read the question twice.',
+      'A cone\u2019s slant height l = √(r² + h²). Almost every cone question needs this first.',
+      'A hemisphere has CSA 2πr² but TSA 3πr² — the extra πr² is the flat circular face.',
+      'When solids are combined, add surface areas of the EXPOSED faces only, and subtract nothing from volume.',
+      'Keep π as 22/7 if the radius is a multiple of 7; otherwise use 3.14.'
     ]}
   ]
 };

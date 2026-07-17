@@ -15,6 +15,7 @@
   <meta name="apple-mobile-web-app-title" content="Ripple">
   <link rel="stylesheet" href="styles.css">
   <script src="study-data.js" defer></script>
+  <script src="study-bio.js" defer></script>
   <script src="app.js" defer></script>
 </head>
 <body data-page="study">
@@ -31,6 +32,8 @@
 
     <div class="seg" id="studyMode" style="margin-bottom:18px">
       <button class="active" data-mode="formulas">Formulas</button>
+      <button data-mode="revision">Revision</button>
+      <button data-mode="bio">Biology</button>
       <button data-mode="elements">Periodic table</button>
       <button data-mode="ions">Valencies</button>
     </div>
@@ -52,6 +55,25 @@
       <div id="formulaList"></div>
     </section>
 
+    <!-- REVISION -->
+    <section id="revisionView" hidden>
+      <div class="card study-filters">
+        <div class="filter-row"><span class="filter-label">Subject</span><div class="filters" id="revSubFilters"></div></div>
+        <div class="filter-row"><span class="filter-label">Class</span><div class="filters" id="revClsFilters"></div></div>
+      </div>
+      <p class="study-note" id="revCount"></p>
+      <div id="revisionList"></div>
+    </section>
+
+    <!-- BIOLOGY -->
+    <section class="notes-layout bio-layout" id="bioView" hidden>
+      <aside class="card" style="padding:14px">
+        <h3 class="ins-title" style="margin-bottom:10px">Chapters</h3>
+        <div class="notes-list" id="bioList"></div>
+      </aside>
+      <section class="card bio-body" id="bioBody"></section>
+    </section>
+
     <!-- PERIODIC TABLE -->
     <section id="elementsView" hidden>
       <div class="card">
@@ -68,6 +90,9 @@
       <div class="card">
         <input class="field" id="ionSearch" placeholder="Search ions — “sulphate”, “ferrous”, “NH4”…" autocomplete="off">
         <div class="ion-wrap">
+          <div class="ion-col-head">
+            <button class="f-act" id="ionAddAll">Add the whole table to notes</button>
+          </div>
           <div>
             <h3 class="ins-title">Cations <span class="faint">(positive)</span></h3>
             <div class="ion-list" id="cationList"></div>
