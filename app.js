@@ -1002,11 +1002,11 @@ function initNotes() {
     if (sketchView) sketchView.hidden = mode !== 'sketch';
     $$('button', seg).forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     store.set('notes:mode', mode);
+    if (mode === 'sketch') initSketch();   // lazy: the canvas is expensive
     Cursor.refresh();
   }
   $$('button', seg).forEach(b => b.addEventListener('click', () => { mode = b.dataset.mode; applyMode(); sfx('tap'); }));
   applyMode();
-  initSketch();
 
   /* ================= NOTES ================= */
   let notes = store.get('notes', []);
@@ -1598,7 +1598,7 @@ const Cursor = (() => {
   const ROOTS = ['.nav', '.shell', '.site-footer'];
 
   let mode = 'ring', built = false, lensBuilt = false;
-  let dot, ring, lens, inner, glare, brushEl;
+  let dot, ring, lens, inner, glare, brushEl, kick = () => {};
   let brush = null;
   let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
   let cloneMap = [];          // [{orig, clone}] so we can re-pin + sync values
@@ -1630,6 +1630,7 @@ const Cursor = (() => {
       dot.style.transform = `translate(${mx}px, ${my}px)`;
       if (brush) brushEl.style.transform = `translate(${mx}px, ${my}px)`;
       if (reduce) ring.style.transform = `translate(${mx}px, ${my}px)`;
+      else kick();
       if (mode === 'lens' && lens) placeLens();
     }, { passive: true });
 
@@ -1637,11 +1638,18 @@ const Cursor = (() => {
     document.addEventListener('pointerover', e => { if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover'); });
     document.addEventListener('pointerout', e => { if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover'); });
 
-    if (!reduce) (function loop() {
-      rx += (mx - rx) * 0.16; ry += (my - ry) * 0.16;
+    // The trailing ring is eased toward the pointer. Rather than run a
+    // requestAnimationFrame loop forever, stop once it has caught up and
+    // restart on the next move — an idle cursor should cost nothing.
+    let raf = null;
+    function loop() {
+      const dx = mx - rx, dy = my - ry;
+      if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) { raf = null; return; }  // settled
+      rx += dx * 0.16; ry += dy * 0.16;
       if (ring) ring.style.transform = `translate(${rx}px, ${ry}px)`;
-      requestAnimationFrame(loop);
-    })();
+      raf = requestAnimationFrame(loop);
+    }
+    kick = () => { if (!reduce && raf === null) raf = requestAnimationFrame(loop); };
     built = true;
   }
 
@@ -1680,12 +1688,21 @@ const Cursor = (() => {
     document.body.appendChild(lens);
     reclone();
 
-    // keep the copy honest as the page changes
+    // Keep the copy honest as the page changes — but watch the CONTENT, not
+    // <body>. Hover toggles a class on body constantly, which would otherwise
+    // trigger a full re-clone every time the pointer crossed a button.
     mo = new MutationObserver(muts => {
-      for (const m of muts) if (lens.contains(m.target)) return;   // ignore our own subtree
-      clearTimeout(recloneT); recloneT = setTimeout(reclone, 220);
+      for (const m of muts) {
+        if (lens.contains(m.target)) continue;              // our own subtree
+        if (m.target === document.body || m.target === document.documentElement) continue;
+        clearTimeout(recloneT); recloneT = setTimeout(reclone, 250);
+        return;
+      }
     });
-    mo.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true });
+    ROOTS.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) mo.observe(el, { childList: true, subtree: true, characterData: true, attributes: true });
+    });
 
     // cloneNode doesn't copy live field values, so mirror them on input
     document.addEventListener('input', () => { clearTimeout(syncT); syncT = setTimeout(syncValues, 60); }, true);
@@ -2613,7 +2630,9 @@ const SK_TOOLS = [
 ];
 const SK_SWATCHES = ['#ffffff', '#0f172a', '#22d3ee', '#2dd4bf', '#3b82f6', '#8b5cf6', '#fb7185', '#ef4444', '#f59e0b', '#22c55e'];
 
+let sketchReady = false;
 function initSketch() {
+  if (sketchReady) return;
   const cv = $('#skCanvas');
   if (!cv) return;
   const ctx = cv.getContext('2d');
@@ -2625,9 +2644,12 @@ function initSketch() {
     const view = $('#sketchView');
     if (view) view.innerHTML = `<div class="card"><div class="empty"><div class="em-ic">🎨</div>
       <p>Drawing isn’t available in this browser — canvas access looks blocked. Notes and Diary still work fine.</p></div></div>`;
+    sketchReady = true;
     return;
   }
+  // ~11 MB of backing store — don't allocate it until someone opens the tab
   cv.width = SK_W * SK_HIDPI; cv.height = SK_H * SK_HIDPI;
+  sketchReady = true;
 
   let sketches = store.get('sketches', []) || [];
   let activeId = sketches[0]?.id ?? null;
@@ -3129,9 +3151,22 @@ function initStudy() {
 /* ============================================================
    Boot
    ============================================================ */
+/* Nothing should animate for a tab you can't see. The aurora blobs are the
+   app's biggest constant cost (three layers of blur + blend), so park them —
+   and any ambience — while the tab is in the background. */
+function initVisibility() {
+  const onHide = () => {
+    const hidden = document.hidden;
+    document.documentElement.classList.toggle('bg-paused', hidden);
+  };
+  document.addEventListener('visibilitychange', onHide);
+  onHide();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   buildNav();
   buildFooter();
+  initVisibility();
   attachRipples();
   Cursor.set(getSettings().cursorMode);
 

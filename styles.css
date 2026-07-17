@@ -94,24 +94,29 @@ a { color: inherit; text-decoration: none; }
   filter: blur(60px);
   opacity: var(--blob-op);
   mix-blend-mode: screen;
-  will-change: transform, border-radius;
+  will-change: transform;
 }
 :root.light .blob { mix-blend-mode: multiply; }
-.blob.b1 { background: radial-gradient(circle at 30% 30%, var(--aqua), transparent 70%);  top: -14vmax; left: -10vmax;  animation: drift1 26s var(--ease-liquid) infinite; }
-.blob.b2 { background: radial-gradient(circle at 30% 30%, var(--violet), transparent 70%); bottom: -18vmax; right: -12vmax; animation: drift2 32s var(--ease-liquid) infinite; }
-.blob.b3 { background: radial-gradient(circle at 30% 30%, var(--coral), transparent 72%);  top: 30%; right: 20%;         animation: drift3 38s var(--ease-liquid) infinite; }
+.blob.b1 { border-radius: 45% 55% 62% 38% / 42% 46% 54% 58%; background: radial-gradient(circle at 30% 30%, var(--aqua), transparent 70%);  top: -14vmax; left: -10vmax;  animation: drift1 26s var(--ease-liquid) infinite; }
+.blob.b2 { border-radius: 55% 45% 40% 60% / 50% 55% 45% 50%; background: radial-gradient(circle at 30% 30%, var(--violet), transparent 70%); bottom: -18vmax; right: -12vmax; animation: drift2 32s var(--ease-liquid) infinite; }
+.blob.b3 { border-radius: 50% 50% 55% 45% / 55% 45% 55% 45%; background: radial-gradient(circle at 30% 30%, var(--coral), transparent 72%);  top: 30%; right: 20%;         animation: drift3 38s var(--ease-liquid) infinite; }
 
+/* Transform only: these run on the compositor and never repaint.
+   The old keyframes also animated border-radius, which forced a full repaint
+   — and therefore a re-blur of a 46vmax layer — on every single frame. Behind
+   filter: blur(60px) that morph was invisible anyway, so it was pure cost.
+   The shape variety now comes from each blob's static border-radius below. */
 @keyframes drift1 {
-  0%,100% { transform: translate(0,0) scale(1) rotate(0deg);   border-radius: 45% 55% 62% 38% / 42% 46% 54% 58%; }
-  50%     { transform: translate(6vmax,4vmax) scale(1.15) rotate(40deg); border-radius: 60% 40% 40% 60% / 55% 60% 40% 45%; }
+  0%,100% { transform: translate(0,0) scale(1) rotate(0deg); }
+  50%     { transform: translate(6vmax,4vmax) scale(1.15) rotate(40deg); }
 }
 @keyframes drift2 {
-  0%,100% { transform: translate(0,0) scale(1) rotate(0deg);   border-radius: 55% 45% 40% 60% / 50% 55% 45% 50%; }
-  50%     { transform: translate(-7vmax,-5vmax) scale(1.2) rotate(-50deg); border-radius: 40% 60% 58% 42% / 48% 42% 58% 52%; }
+  0%,100% { transform: translate(0,0) scale(1) rotate(0deg); }
+  50%     { transform: translate(-7vmax,-5vmax) scale(1.2) rotate(-50deg); }
 }
 @keyframes drift3 {
-  0%,100% { transform: translate(0,0) scale(.9) rotate(0deg); border-radius: 50% 50% 55% 45% / 55% 45% 55% 45%; }
-  50%     { transform: translate(-6vmax,6vmax) scale(1.05) rotate(60deg); border-radius: 45% 55% 45% 55% / 42% 58% 42% 58%; }
+  0%,100% { transform: translate(0,0) scale(.9) rotate(0deg); }
+  50%     { transform: translate(-6vmax,6vmax) scale(1.05) rotate(60deg); }
 }
 
 /* ---------- Layout shell ---------- */
@@ -1668,3 +1673,19 @@ body.breathing .breathe-ring.r3 { animation-delay: 1.6s; }
   .el-big { width: 64px; height: 64px; }
   .el-sym { font-size: 1.6rem; }
 }
+
+/* ============================================================
+   IDLE COST — a background tab should do no work
+
+   The aurora is three blurred, blended layers animating continuously: the
+   single most expensive thing on screen. Pausing it when the tab is hidden
+   costs nothing visually and saves real battery, especially on phones.
+   ============================================================ */
+.bg-paused .blob { animation-play-state: paused; }
+.bg-paused .logo-mark .emanate,
+.bg-paused .brand .logo-mark .emanate { animation-play-state: paused; }
+.bg-paused .breathe-ring { animation-play-state: paused; }
+
+/* Promote the blobs to their own layer so the blur is rasterised once and
+   merely moved, instead of being recomputed every frame. */
+/* (no paint containment — it would clip the blur and create hard edges) */
