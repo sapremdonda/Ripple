@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Study · Ripple</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#8b5cf6">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ripple">
+  <link rel="stylesheet" href="styles.css">
+  <script src="study-data.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body data-page="study">
+  <div class="liquid-bg"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span></div>
+
+  <nav class="nav" id="nav"></nav>
+
+  <main class="shell">
+    <header class="page-head">
+      <span class="eyebrow">Reference</span>
+      <h1>Study</h1>
+      <p>Formulas, elements and valencies — everything worth remembering, in one place. Works offline.</p>
+    </header>
+
+    <div class="seg" id="studyMode" style="margin-bottom:18px">
+      <button class="active" data-mode="formulas">Formulas</button>
+      <button data-mode="elements">Periodic table</button>
+      <button data-mode="ions">Valencies</button>
+    </div>
+
+    <!-- FORMULAS -->
+    <section id="formulasView">
+      <div class="card study-filters">
+        <input class="field" id="studySearch" placeholder="Search formulas — try “quadratic”, “mole”, “lens”…" autocomplete="off">
+        <div class="filter-row">
+          <span class="filter-label">Subject</span>
+          <div class="filters" id="subFilters"></div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">Class</span>
+          <div class="filters" id="clsFilters"></div>
+        </div>
+      </div>
+      <p class="study-note" id="studyCount"></p>
+      <div id="formulaList"></div>
+    </section>
+
+    <!-- PERIODIC TABLE -->
+    <section id="elementsView" hidden>
+      <div class="card">
+        <input class="field" id="elSearch" placeholder="Find an element — name, symbol or number" autocomplete="off">
+        <div class="pt-legend" id="ptLegend"></div>
+        <div class="pt-scroll"><div class="pt-grid" id="ptGrid"></div></div>
+        <p class="study-note">Tip: scroll sideways on a phone, and tap any element for details.</p>
+      </div>
+      <div class="card el-detail" id="elDetail" hidden></div>
+    </section>
+
+    <!-- VALENCIES -->
+    <section id="ionsView" hidden>
+      <div class="card">
+        <input class="field" id="ionSearch" placeholder="Search ions — “sulphate”, “ferrous”, “NH4”…" autocomplete="off">
+        <div class="ion-wrap">
+          <div>
+            <h3 class="ins-title">Cations <span class="faint">(positive)</span></h3>
+            <div class="ion-list" id="cationList"></div>
+          </div>
+          <div>
+            <h3 class="ins-title">Anions <span class="faint">(negative)</span></h3>
+            <div class="ion-list" id="anionList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <p class="study-disclaimer">
+      Formulas in Science and Maths are the same for CBSE and GSEB — what differs between boards is the
+      chapter order, not the physics. Class tags here are a guide, so check placement against your own textbook.
+    </p>
+  </main>
+</body>
+</html>

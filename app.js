@@ -110,6 +110,7 @@ function attachRipples() {
 /* ---------- Nav: build, active state, mobile toggle, theme toggle ---------- */
 const PAGES = [
   ['index.html', 'Home'],
+  ['study.html', 'Study'],
   ['tasks.html', 'Tasks'],
   ['focus.html', 'Focus'],
   ['breathe.html', 'Breathe'],
@@ -2387,6 +2388,16 @@ function initSketch() {
   const cv = $('#skCanvas');
   if (!cv) return;
   const ctx = cv.getContext('2d');
+  // Some privacy tools block canvas outright. Don't let that take Notes and
+  // Diary down with it — hide the sketch tab and carry on.
+  if (!ctx) {
+    const tab = document.querySelector('#notesMode button[data-mode="sketch"]');
+    if (tab) tab.hidden = true;
+    const view = $('#sketchView');
+    if (view) view.innerHTML = `<div class="card"><div class="empty"><div class="em-ic">🎨</div>
+      <p>Drawing isn’t available in this browser — canvas access looks blocked. Notes and Diary still work fine.</p></div></div>`;
+    return;
+  }
   cv.width = SK_W * SK_HIDPI; cv.height = SK_H * SK_HIDPI;
 
   let sketches = store.get('sketches', []) || [];
@@ -2652,6 +2663,241 @@ function initSketch() {
 }
 
 /* ============================================================
+   STUDY — offline reference: formulas, periodic table, valencies
+   ============================================================ */
+
+/* Tiny formula formatter: ^ = superscript, _ = subscript.
+   Escapes first, so data can never inject markup.
+   Shorthand is deliberately narrow so chemistry works:
+     H_2O   -> H₂O  (digits stop at the O, they don't swallow it)
+     v_rms  -> v_rms as one subscript (letter runs are fine below the line)
+     ^nC_r  -> only "n" goes up (a single letter above the line)
+     H^+    -> a lone sign is allowed
+   Anything longer needs braces: x^{n+1}, t_{1/2}. */
+function fmtF(s) {
+  const short = x => x
+    .replace(/\^([-+\u2212]?\d+|[-+\u2212]|[A-Za-z\u00b0])/g, (m, g) => `<sup>${g}</sup>`)
+    .replace(/_([-+\u2212]?\d+|[A-Za-z]+)/g, (m, g) => `<sub>${g}</sub>`);
+  let t = escapeHtml(String(s));
+  // braces first, and process their contents too so e^{-E_a/RT} nests properly
+  t = t.replace(/\^\{([^}]*)\}/g, (m, g) => `<sup>${short(g)}</sup>`);
+  t = t.replace(/_\{([^}]*)\}/g, (m, g) => `<sub>${short(g)}</sub>`);
+  return short(t);
+}
+
+/* Standard periodic-table position from atomic number.
+   Derived rather than stored — the layout follows fixed rules. */
+function ptPos(z) {
+  if (z === 1) return [1, 1];
+  if (z === 2) return [18, 1];
+  if (z <= 4) return [z - 2, 2];
+  if (z <= 10) return [z + 8, 2];
+  if (z <= 12) return [z - 10, 3];
+  if (z <= 18) return [z, 3];
+  if (z <= 36) return [z - 18, 4];
+  if (z <= 54) return [z - 36, 5];
+  if (z <= 56) return [z - 54, 6];
+  if (z <= 71) return [z - 54, 9];      // lanthanides, own row
+  if (z <= 86) return [z - 68, 6];
+  if (z <= 88) return [z - 86, 7];
+  if (z <= 103) return [z - 86, 10];    // actinides, own row
+  return [z - 100, 7];
+}
+
+function initStudy() {
+  const D = window.STUDY;
+  if (!D) { $('#formulaList').innerHTML = '<div class="empty"><p>Reference data didn’t load. Try refreshing.</p></div>'; return; }
+
+  /* ---- mode ---- */
+  const views = { formulas: $('#formulasView'), elements: $('#elementsView'), ions: $('#ionsView') };
+  let mode = store.get('study:mode', 'formulas');
+  if (!views[mode]) mode = 'formulas';
+  function applyMode() {
+    Object.entries(views).forEach(([k, v]) => { v.hidden = k !== mode; });
+    $$('#studyMode button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    store.set('study:mode', mode);
+  }
+  $('#studyMode').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    mode = b.dataset.mode; applyMode(); sfx('tap');
+  });
+  applyMode();
+
+  /* ================= FORMULAS ================= */
+  const SUBS = [['all', 'All'], ['maths', 'Maths'], ['physics', 'Physics'], ['chemistry', 'Chemistry']];
+  let sub = store.get('study:sub', 'all');
+  let cls = store.get('study:cls', 0);   // 0 = all classes
+  let q = '';
+
+  $('#subFilters').innerHTML = SUBS.map(([id, l]) =>
+    `<button class="chip ${id === sub ? 'active' : ''}" data-sub="${id}">${l}</button>`).join('');
+  $('#clsFilters').innerHTML = `<button class="chip ${!cls ? 'active' : ''}" data-cls="0">All</button>` +
+    [5, 6, 7, 8, 9, 10, 11, 12].map(c => `<button class="chip ${cls === c ? 'active' : ''}" data-cls="${c}">${c}</button>`).join('');
+
+  // flatten topics into searchable items, each carrying its own class tags
+  const ITEMS = [];
+  D.formulas.forEach(t => t.items.forEach(it => {
+    ITEMS.push({
+      sub: t.sub, ch: t.ch,
+      cls: it.cls || t.cls || [],
+      n: it.n, f: it.f, v: it.v || [], note: it.note || '',
+      hay: (it.n + ' ' + it.f + ' ' + t.ch + ' ' + (it.note || '') + ' ' + t.sub).toLowerCase()
+    });
+  }));
+
+  function matches(it) {
+    if (sub !== 'all' && it.sub !== sub) return false;
+    if (cls && !it.cls.includes(cls)) return false;
+    if (q && !it.hay.includes(q)) return false;
+    return true;
+  }
+
+  function renderFormulas() {
+    const hits = ITEMS.filter(matches);
+    $('#studyCount').textContent = `${hits.length} formula${hits.length === 1 ? '' : 's'}`;
+    if (!hits.length) {
+      $('#formulaList').innerHTML = `<div class="empty"><div class="em-ic">🔍</div><p>Nothing matches. Try a different word, or widen the filters.</p></div>`;
+      return;
+    }
+    // group by chapter, preserving data order
+    const groups = [];
+    hits.forEach(it => {
+      let g = groups.find(x => x.ch === it.ch && x.sub === it.sub);
+      if (!g) { g = { ch: it.ch, sub: it.sub, items: [] }; groups.push(g); }
+      g.items.push(it);
+    });
+    $('#formulaList').innerHTML = groups.map(g => `
+      <section class="card f-group">
+        <div class="f-head">
+          <span class="f-sub ${g.sub}">${g.sub}</span>
+          <h3>${escapeHtml(g.ch)}</h3>
+        </div>
+        <div class="f-items">${g.items.map(it => `
+          <article class="f-card" data-n="${escapeHtml(it.n)}">
+            <div class="f-top">
+              <h4>${escapeHtml(it.n)}</h4>
+              ${it.cls.length ? `<span class="f-cls">Class ${it.cls.join(', ')}</span>` : ''}
+            </div>
+            <div class="f-eq">${fmtF(it.f)}</div>
+            ${it.v.length ? `<ul class="f-vars">${it.v.map(([s, m]) => `<li><b>${fmtF(s)}</b> ${escapeHtml(m)}</li>`).join('')}</ul>` : ''}
+            ${it.note ? `<p class="f-note">${escapeHtml(it.note)}</p>` : ''}
+            <div class="f-acts">
+              <button class="f-act" data-act="copy">Copy</button>
+              <button class="f-act" data-act="note">Save to notes</button>
+            </div>
+          </article>`).join('')}</div>
+      </section>`).join('');
+  }
+
+  $('#subFilters').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    sub = b.dataset.sub; store.set('study:sub', sub);
+    $$('#subFilters .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); renderFormulas(); sfx('tap');
+  });
+  $('#clsFilters').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    cls = +b.dataset.cls; store.set('study:cls', cls);
+    $$('#clsFilters .chip').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); renderFormulas(); sfx('tap');
+  });
+  let sdeb;
+  $('#studySearch').addEventListener('input', e => {
+    clearTimeout(sdeb);
+    sdeb = setTimeout(() => { q = e.target.value.trim().toLowerCase(); renderFormulas(); }, 160);
+  });
+
+  // copy / save to notes
+  $('#formulaList').addEventListener('click', async e => {
+    const b = e.target.closest('.f-act'); if (!b) return;
+    const card = b.closest('.f-card');
+    const it = ITEMS.find(x => x.n === card.dataset.n);
+    if (!it) return;
+    const plain = `${it.n}\n${it.f}${it.v.length ? '\n' + it.v.map(([s, m]) => `${s} = ${m}`).join('\n') : ''}${it.note ? '\n' + it.note : ''}`;
+    if (b.dataset.act === 'copy') {
+      try { await navigator.clipboard.writeText(plain); toast('Copied'); sfx('tap'); }
+      catch { toast('Couldn’t copy — long-press to select'); }
+    } else {
+      const notes = store.get('notes', []) || [];
+      notes.unshift({ id: Date.now(), title: it.n, body: plain + `\n\n(${it.ch})`, updated: Date.now() });
+      if (store.set('notes', notes)) { toast('Saved to your notes'); sfx('complete'); }
+    }
+  });
+
+  renderFormulas();
+
+  /* ================= PERIODIC TABLE ================= */
+  const cats = [...new Set(D.elements.map(e => e[4]))];
+  $('#ptLegend').innerHTML = cats.map(c =>
+    `<span class="pt-key"><i class="pt-dot ${c}"></i>${escapeHtml(D.catNames[c] || c)}</span>`).join('');
+
+  function renderPT(filter) {
+    const f = (filter || '').trim().toLowerCase();
+    $('#ptGrid').innerHTML = D.elements.map(([z, sym, name, mass, cat]) => {
+      const [x, y] = ptPos(z);
+      const dim = f && !(String(z) === f || sym.toLowerCase().startsWith(f) || name.toLowerCase().includes(f));
+      return `<button class="pt-el ${cat} ${dim ? 'dim' : ''}" style="grid-column:${x};grid-row:${y}" data-z="${z}" title="${escapeHtml(name)}">
+          <span class="pt-z">${z}</span><span class="pt-sym">${sym}</span>
+        </button>`;
+    }).join('') +
+      `<span class="pt-gap" style="grid-column:3/18;grid-row:8"></span>
+       <span class="pt-tag" style="grid-column:2;grid-row:9">57–71</span>
+       <span class="pt-tag" style="grid-column:2;grid-row:10">89–103</span>`;
+  }
+  renderPT();
+
+  $('#elSearch').addEventListener('input', e => renderPT(e.target.value));
+  $('#ptGrid').addEventListener('click', e => {
+    const b = e.target.closest('.pt-el'); if (!b) return;
+    const z = +b.dataset.z;
+    const [, sym, name, mass, cat] = D.elements.find(el => el[0] === z);
+    const [x, y] = ptPos(z);
+    const group = y <= 7 ? x : '—';
+    const period = y <= 7 ? y : (y === 9 ? 6 : 7);
+    $$('.pt-el').forEach(el => el.classList.toggle('sel', el === b));
+    const d = $('#elDetail');
+    d.hidden = false;
+    d.innerHTML = `
+      <div class="el-head ${cat}">
+        <div class="el-big"><span class="el-z">${z}</span><span class="el-sym">${sym}</span></div>
+        <div>
+          <h3>${escapeHtml(name)}</h3>
+          <p class="muted">${escapeHtml(D.catNames[cat] || cat)}</p>
+        </div>
+      </div>
+      <div class="el-grid">
+        <div><span class="faint">Atomic number</span><b>${z}</b></div>
+        <div><span class="faint">Atomic mass</span><b>${mass}</b></div>
+        <div><span class="faint">Group</span><b>${group}</b></div>
+        <div><span class="faint">Period</span><b>${period}</b></div>
+      </div>
+      ${/^\[/.test(mass) ? `<p class="f-note">Square brackets mean this element has no stable isotope — the figure is the mass number of its most stable known form.</p>` : ''}`;
+    d.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    sfx('tap');
+  });
+
+  /* ================= VALENCIES ================= */
+  function renderIons(filter) {
+    const f = (filter || '').trim().toLowerCase();
+    const row = ([formula, name, val, alias]) => {
+      const hay = (formula + ' ' + name + ' ' + alias).toLowerCase().replace(/[_^{}]/g, '');
+      if (f && !hay.includes(f)) return '';
+      return `<div class="ion-row">
+        <span class="ion-f">${fmtF(formula)}</span>
+        <span class="ion-n">${escapeHtml(name)}${alias ? ` <i class="faint">${escapeHtml(alias)}</i>` : ''}</span>
+        <span class="ion-v">${val}</span>
+      </div>`;
+    };
+    const c = D.ions.cations.map(row).join('');
+    const a = D.ions.anions.map(row).join('');
+    $('#cationList').innerHTML = c || `<p class="faint" style="padding:10px">No match</p>`;
+    $('#anionList').innerHTML = a || `<p class="faint" style="padding:10px">No match</p>`;
+  }
+  renderIons();
+  $('#ionSearch').addEventListener('input', e => renderIons(e.target.value));
+}
+
+/* ============================================================
    Boot
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
@@ -2672,7 +2918,7 @@ document.addEventListener('DOMContentLoaded', () => {
     home: initHome, tasks: initTasks, focus: initFocus,
     notes: initNotes, habits: initHabits, tools: initTools,
     settings: initSettings, type: initType, changelog: initChangelog,
-    insights: initInsights, breathe: initBreathe
+    insights: initInsights, breathe: initBreathe, study: initStudy
   };
   const page = document.body.dataset.page;
   if (routes[page]) routes[page]();
