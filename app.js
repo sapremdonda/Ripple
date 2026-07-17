@@ -480,83 +480,312 @@ function initTasks() {
 }
 
 /* ============================================================
-   AMBIENT SOUNDS — generated with Web Audio (no files needed)
+   AMBIENT SOUNDS — synthesised, no audio files
+
+   Built the way field recordings actually behave:
+     · PINK (1/f) and BROWN (1/f^2) noise beds, not white — white noise is
+       flat across the spectrum, which is why it reads as static.
+     · Discrete transients: raindrops, wind gusts, cup clinks. Steady filtered
+       noise never sounds like weather; the events do.
+     · Stochastic timing and asymmetric envelopes (a wave crashes fast and
+       hisses away slowly) so nothing loops audibly.
+     · Stereo spread plus a convolution reverb built from a generated impulse,
+       so it sits in a room rather than inside your head.
    ============================================================ */
 const Ambient = (() => {
-  let ctx = null, master = null;
-  const layers = {};   // name -> { gain, nodes[], vol }
   const DEFS = ['rain', 'waves', 'wind', 'cafe'];
+  const TRIM = { rain: 0.34, waves: 0.40, wind: 0.30, cafe: 0.26 };  // per-layer loudness match
+  const BUF_SECS = 6;
+
+  let ctx = null, master = null, conv = null, wet = null;
+  let pink = null, brown = null;
+  const L = {};
+  let timer = null;
+  let nextDrop = 0, nextWave = 0, nextGust = 0, nextClink = 0;
+
+  /* ---- noise generators ---------------------------------------------
+     Pink: Paul Kellet's economical filter bank — a well-known approximation
+     of a -3 dB/octave slope. Brown: integrated white, -6 dB/octave. */
+  function fillPink(d) {
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      b0 = 0.99886 * b0 + w * 0.0555179;
+      b1 = 0.99332 * b1 + w * 0.0750759;
+      b2 = 0.96900 * b2 + w * 0.1538520;
+      b3 = 0.86650 * b3 + w * 0.3104856;
+      b4 = 0.55000 * b4 + w * 0.5329522;
+      b5 = -0.7616 * b5 - w * 0.0168980;
+      d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11;
+      b6 = w * 0.115926;
+    }
+  }
+  function fillBrown(d) {
+    let last = 0;
+    for (let i = 0; i < d.length; i++) {
+      const w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      d[i] = last * 3.5;
+    }
+  }
+  function noiseBuffer(kind) {
+    const b = ctx.createBuffer(2, ctx.sampleRate * BUF_SECS, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) (kind === 'pink' ? fillPink : fillBrown)(b.getChannelData(ch));
+    return b;   // independent per channel => natural stereo width
+  }
+  /* Impulse response: noise with an exponential tail. Cheap, and enough to
+     place the sound in a space. */
+  function makeIR(secs, decay) {
+    const len = Math.floor(ctx.sampleRate * secs);
+    const b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = b.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return b;
+  }
+
+  /* ---- small helpers ---- */
+  const gain = v => { const g = ctx.createGain(); g.gain.value = v; return g; };
+  const filt = (type, f, q) => {
+    const b = ctx.createBiquadFilter();
+    b.type = type; b.frequency.value = f; if (q != null) b.Q.value = q;
+    return b;
+  };
+  const panner = v => {
+    if (!ctx.createStereoPanner) return gain(1);          // very old browsers
+    const p = ctx.createStereoPanner(); p.pan.value = v; return p;
+  };
+  // start each source at a random offset so layers never correlate
+  const src = (buf, rate) => {
+    const s = ctx.createBufferSource();
+    s.buffer = buf; s.loop = true;
+    s.playbackRate.value = rate || 1;
+    s.start(0, Math.random() * BUF_SECS);
+    return s;
+  };
 
   function ac() {
     if (!ctx) {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
-      master = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
+      master = gain(1);
+      // Brown noise carries huge sub-20Hz energy that you can't hear but which
+      // eats headroom and makes phone speakers work for nothing. Cut it.
+      const sub = filt('highpass', 28, 0.7);
+      // a gentle limiter keeps stacked layers from clipping
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -20; comp.knee.value = 12; comp.ratio.value = 4;
+      comp.attack.value = 0.01; comp.release.value = 0.3;
+      master.connect(sub); sub.connect(comp); comp.connect(ctx.destination);
+      conv = ctx.createConvolver(); conv.buffer = makeIR(2.4, 2.8);
+      wet = gain(1); conv.connect(wet); wet.connect(master);
+      pink = noiseBuffer('pink');
+      brown = noiseBuffer('brown');
     }
     if (ctx.state === 'suspended') ctx.resume();
     return ctx;
   }
-  // steady noise buffer, looped — cheap and seamless
-  function noiseSource(c) {
-    const len = 2 * c.sampleRate;
-    const buf = c.createBuffer(1, len, c.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    const s = c.createBufferSource(); s.buffer = buf; s.loop = true;
-    return s;
-  }
-  // slow LFO to make a layer breathe instead of sitting flat
-  function lfo(c, target, rate, depth, base) {
-    const o = c.createOscillator(), g = c.createGain();
-    o.frequency.value = rate; g.gain.value = depth;
-    target.value = base;
-    o.connect(g); g.connect(target); o.start();
-    return o;
-  }
-  function build(name) {
-    const c = ac();
-    const g = c.createGain(); g.gain.value = 0; g.connect(master);
-    const nodes = [];
 
-    if (name === 'rain') {
-      const src = noiseSource(c);
-      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 900;
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 6500;
-      src.connect(hp); hp.connect(lp); lp.connect(g); src.start();
-      nodes.push(src, lfo(c, lp.frequency, 0.08, 900, 6000));
-    } else if (name === 'waves') {
-      const src = noiseSource(c);
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 700;
-      const swell = c.createGain(); swell.gain.value = 0.5;
-      src.connect(lp); lp.connect(swell); swell.connect(g); src.start();
-      // long swell = the push/pull of surf
-      nodes.push(src, lfo(c, swell.gain, 0.09, 0.42, 0.5), lfo(c, lp.frequency, 0.07, 260, 620));
-    } else if (name === 'wind') {
-      const src = noiseSource(c);
-      const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 500; bp.Q.value = 0.7;
-      src.connect(bp); bp.connect(g); src.start();
-      nodes.push(src, lfo(c, bp.frequency, 0.05, 260, 480));
-    } else if (name === 'cafe') {
-      const src = noiseSource(c);
-      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 950;
-      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 180;
-      src.connect(hp); hp.connect(lp); lp.connect(g); src.start();
-      nodes.push(src, lfo(c, lp.frequency, 0.13, 300, 900));
+  /* ---- layers ---- */
+  function buildRain() {
+    const out = gain(0);
+    const send = gain(0.18); out.connect(send); send.connect(conv);
+    out.connect(master);
+
+    // bed — rain landing on ground, rolled off high
+    const bed = src(pink, 0.85);
+    const hp = filt('highpass', 300, 0.6);
+    const lp = filt('lowpass', 2600, 0.7);
+    const bedG = gain(0.5);
+    bed.connect(hp); hp.connect(lp); lp.connect(bedG); bedG.connect(out);
+
+    // fine spray sitting above it
+    const spray = src(pink, 1.7);
+    const shp = filt('highpass', 3000, 0.6);
+    const sprayG = gain(0.1);
+    spray.connect(shp); shp.connect(sprayG); sprayG.connect(out);
+
+    const drops = gain(0.85); drops.connect(out);
+    return { out, drops, lp, nodes: [bed, spray] };
+  }
+
+  function buildWaves() {
+    const out = gain(0);
+    const send = gain(0.3); out.connect(send); send.connect(conv);
+    out.connect(master);
+
+    const surf = src(pink, 0.7);
+    const lp = filt('lowpass', 500, 0.8);
+    const swell = gain(0.15);                    // driven by the wave scheduler
+    surf.connect(lp); lp.connect(swell); swell.connect(out);
+
+    // deep rumble underneath
+    const rum = src(brown, 0.5);
+    const rlp = filt('lowpass', 180, 0.7);
+    const rg = gain(0.5);
+    rum.connect(rlp); rlp.connect(rg); rg.connect(out);
+
+    return { out, lp, swell, nodes: [surf, rum] };
+  }
+
+  function buildWind() {
+    const out = gain(0);
+    const send = gain(0.16); out.connect(send); send.connect(conv);
+    out.connect(master);
+
+    // body — brown noise through a wide band
+    const body = src(brown, 1);
+    const bp = filt('bandpass', 420, 0.8);
+    const bg = gain(0.9);
+    body.connect(bp); bp.connect(bg); bg.connect(out);
+
+    // howl — a narrow resonance is what makes wind sound like wind
+    const howl = src(pink, 0.9);
+    const hb = filt('bandpass', 700, 6);
+    const hg = gain(0.12);
+    howl.connect(hb); hb.connect(hg); hg.connect(out);
+
+    // hiss through leaves, panned wide
+    const hiss = src(pink, 1.3);
+    const hhp = filt('highpass', 1800, 0.7);
+    const hhg = gain(0.05);
+    const hp2 = panner(0.5);
+    hiss.connect(hhp); hhp.connect(hhg); hhg.connect(hp2); hp2.connect(out);
+
+    return { out, bp, bg, hb, hg, nodes: [body, howl, hiss] };
+  }
+
+  function buildCafe() {
+    const out = gain(0);
+    const send = gain(0.34); out.connect(send); send.connect(conv);
+    out.connect(master);
+
+    // babble — pink noise shaped to the speech band
+    const bab = src(pink, 1);
+    const bp = filt('bandpass', 620, 0.9);
+    const bg = gain(0.5);
+    bab.connect(bp); bp.connect(bg); bg.connect(out);
+
+    // room tone
+    const room = src(brown, 0.8);
+    const rlp = filt('lowpass', 260, 0.7);
+    const rg = gain(0.35);
+    room.connect(rlp); rlp.connect(rg); rg.connect(out);
+
+    const clinks = gain(0.5); clinks.connect(out);
+    return { out, bg, clinks, nodes: [bab, room] };
+  }
+
+  const BUILD = { rain: buildRain, waves: buildWaves, wind: buildWind, cafe: buildCafe };
+
+  /* ---- one-shot events ---- */
+  function dropAt(t, v) {
+    const b = L.rain; if (!b) return;
+    const s = ctx.createBufferSource();
+    s.buffer = pink; s.loop = false;
+    s.playbackRate.value = 1.4 + Math.random() * 2.2;
+    const bp = filt('bandpass', 1100 + Math.random() * 3600, 1.4 + Math.random() * 3.5);
+    const g = gain(0);
+    const p = panner(Math.random() * 1.8 - 0.9);
+    const peak = (0.25 + Math.random() * 0.75) * (0.4 + v * 0.6);
+    const dur = 0.018 + Math.random() * 0.055;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + 0.0015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(bp); bp.connect(g); g.connect(p); p.connect(b.drops);
+    s.start(t, Math.random() * (BUF_SECS - 0.2)); s.stop(t + dur + 0.03);
+  }
+
+  function waveAt(t) {
+    const b = L.waves; if (!b) return 8;
+    const dur = 7 + Math.random() * 6;
+    const peak = t + dur * (0.25 + Math.random() * 0.15);   // fast crash, slow wash
+    const force = 0.5 + Math.random() * 0.5;
+    b.swell.gain.cancelScheduledValues(t);
+    b.swell.gain.setValueAtTime(Math.max(0.02, b.swell.gain.value), t);
+    b.swell.gain.linearRampToValueAtTime(0.55 * force, peak);
+    b.swell.gain.exponentialRampToValueAtTime(0.04, t + dur);
+    b.lp.frequency.cancelScheduledValues(t);
+    b.lp.frequency.setValueAtTime(Math.max(120, b.lp.frequency.value), t);
+    b.lp.frequency.linearRampToValueAtTime(700 + 1800 * force, peak);   // brightens as it breaks
+    b.lp.frequency.exponentialRampToValueAtTime(320, t + dur);
+    return dur;
+  }
+
+  function gustAt(t) {
+    const b = L.wind; if (!b) return 5;
+    const dur = 3 + Math.random() * 6;
+    const force = 0.25 + Math.random() * 0.75;
+    const mid = t + dur * (0.3 + Math.random() * 0.25);
+    [[b.bp.frequency, 260, 260 + 950 * force], [b.hb.frequency, 480, 480 + 900 * force]].forEach(([p, lo, hi]) => {
+      p.cancelScheduledValues(t); p.setValueAtTime(Math.max(60, p.value), t);
+      p.linearRampToValueAtTime(hi, mid); p.linearRampToValueAtTime(lo, t + dur);
+    });
+    [[b.bg.gain, 0.35, 0.35 + 0.65 * force], [b.hg.gain, 0.03, 0.03 + 0.16 * force]].forEach(([p, lo, hi]) => {
+      p.cancelScheduledValues(t); p.setValueAtTime(Math.max(0.001, p.value), t);
+      p.linearRampToValueAtTime(hi, mid); p.linearRampToValueAtTime(lo, t + dur);
+    });
+    return dur;
+  }
+
+  function clinkAt(t) {
+    const b = L.cafe; if (!b) return 4;
+    const o = ctx.createOscillator();
+    o.type = 'sine'; o.frequency.value = 1800 + Math.random() * 3400;
+    const g = gain(0);
+    const p = panner(Math.random() * 1.6 - 0.8);
+    const peak = 0.03 + Math.random() * 0.05;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + 0.002);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12 + Math.random() * 0.2);
+    o.connect(g); g.connect(p); p.connect(b.clinks);
+    o.start(t); o.stop(t + 0.4);
+    return 1.5 + Math.random() * 6;
+  }
+
+  /* ---- lookahead scheduler: keeps events ahead of the audio clock ---- */
+  function tick() {
+    if (!ctx) return;
+    const now = ctx.currentTime, AHEAD = 0.3;
+
+    const rv = L.rain ? L.rain.vol : 0;
+    if (rv > 0.001) {
+      if (nextDrop < now) nextDrop = now;
+      const rate = 5 + rv * 30;                 // drops/sec scales with volume
+      while (nextDrop < now + AHEAD) { dropAt(nextDrop, rv); nextDrop += (0.5 + Math.random()) / rate; }
     }
-    layers[name] = { gain: g, nodes, vol: 0 };
-    return layers[name];
+    if (L.waves && L.waves.vol > 0.001) {
+      if (nextWave < now) nextWave = now;
+      while (nextWave < now + AHEAD) nextWave += waveAt(nextWave);
+    }
+    if (L.wind && L.wind.vol > 0.001) {
+      if (nextGust < now) nextGust = now;
+      while (nextGust < now + AHEAD) nextGust += gustAt(nextGust);
+    }
+    if (L.cafe && L.cafe.vol > 0.001) {
+      if (nextClink < now) nextClink = now;
+      while (nextClink < now + AHEAD) nextClink += clinkAt(nextClink);
+    }
   }
+  function runScheduler(on) {
+    if (on && !timer) { tick(); timer = setInterval(tick, 120); }
+    else if (!on && timer) { clearInterval(timer); timer = null; }
+  }
+
+  /* ---- public ---- */
   function set(name, vol) {
-    const L = layers[name] || (vol > 0 ? build(name) : null);
-    if (!L) return;
-    L.vol = vol;
-    const c = ac();
-    // scaled down: ambience should sit under everything else
-    L.gain.gain.setTargetAtTime(vol * 0.22, c.currentTime, 0.25);
+    if (!DEFS.includes(name)) return;
+    if (!L[name] && vol <= 0) return;
+    ac();
+    if (!L[name]) { L[name] = BUILD[name](); L[name].vol = 0; }
+    const l = L[name];
+    l.vol = vol;
+    l.out.gain.setTargetAtTime(vol * TRIM[name], ctx.currentTime, 0.4);
+    runScheduler(active());
   }
-  function stopAll() {
-    Object.keys(layers).forEach(n => set(n, 0));
-  }
-  function active() { return Object.values(layers).some(l => l.vol > 0); }
+  function stopAll() { DEFS.forEach(n => { if (L[n]) set(n, 0); }); runScheduler(false); }
+  function active() { return DEFS.some(n => L[n] && L[n].vol > 0.001); }
+
   return { DEFS, set, stopAll, active };
 })();
 
